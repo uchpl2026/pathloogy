@@ -1,0 +1,71 @@
+.table-card {
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.table-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 0.5px solid var(--border);
+}
+
+.search-wrap { position: relative; flex: 1; max-width: 280px; }
+.search-wrap i {
+  position: absolute; left: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px; color: var(--text-tertiary);
+}
+.search-input {
+  width: 100%; padding: 7px 12px 7px 32px;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+.search-input:focus { outline: none; border-color: var(--blue); }
+
+.table-scroll { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-tertiary); text-align: left;
+  padding: 10px 18px;
+  background: var(--bg-secondary);
+  border-bottom: 0.5px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 12px 18px;
+  font-size: 13px;
+  border-bottom: 0.5px solid var(--border);
+  color: var(--text-primary);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-secondary); }
+
+.action-btns { display: flex; gap: 6px; }
+
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 0.5px solid var(--border);
+  font-size: 12px; color: var(--text-secondary);
+}
+.page-btns { display: flex; gap: 4px; }
+.page-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--border);
+  background: var(--bg-primary);
+  cursor: pointer; font-size: 12px;
+  color: var(--text-secondary);
+  font-family: inherit;
+}
+.page-btn.active { background: var(--blue-light); color: var(--blue); border-color: #B5D4F4; font-weight: 500; }
