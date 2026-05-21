@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CrudTable from '../components/CrudTable';
-import StatusBadge from '../components/StatusBadge';
 import Avatar from '../components/Avatar';
 import { collectionOrdersAPI } from '../api';
 
@@ -107,10 +106,6 @@ const COLUMNS = [
   {
     key: 'test_date', label: 'Test Date',
     render: r => <span style={{ fontSize: 12 }}>{r.test_date || '—'}</span>,
-  },
-  {
-    key: 'status', label: 'Status',
-    render: r => <StatusBadge status={r.status} />,
   },
 ];
 

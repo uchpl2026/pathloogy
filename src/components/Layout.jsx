@@ -8,6 +8,7 @@ const NAV = [
   { to: '/pathologies',        icon: 'ti-virus',            label: 'Pathologies',       section: 'management'  },
   { to: '/collectors',         icon: 'ti-user-check',       label: 'Collectors',        section: 'management'  },
   { to: '/collection-orders',  icon: 'ti-truck-delivery',   label: 'Collection Orders', section: 'management'  },
+  { to: '/reports',            icon: 'ti-chart-bar',        label: 'Reports',           section: 'reports'     },
 ];
 
 const PAGE_TITLES = {
@@ -16,6 +17,7 @@ const PAGE_TITLES = {
   '/collectors':        'Collectors',
   '/collection-orders': 'Collection Orders',
   '/labs':              'LabList',
+  '/reports':           'Reports',
 };
 
 export default function Layout({ user, onLogout }) {
@@ -63,6 +65,16 @@ export default function Layout({ user, onLogout }) {
           <div className="nav-section">
             <div className="nav-label">Management</div>
             {NAV.filter(n => n.section === 'management').map(n => (
+              <NavLink key={n.to} to={n.to} onClick={closeSidebar}
+                className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
+                <i className={`ti ${n.icon}`} aria-hidden="true" />
+                {n.label}
+              </NavLink>
+            ))}
+          </div>
+          <div className="nav-section">
+            <div className="nav-label">Analytics</div>
+            {NAV.filter(n => n.section === 'reports').map(n => (
               <NavLink key={n.to} to={n.to} onClick={closeSidebar}
                 className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
                 <i className={`ti ${n.icon}`} aria-hidden="true" />

@@ -10,6 +10,7 @@ import CollectionOrders from './pages/CollectionOrders';
 import CollectionOrderForm from './pages/CollectionOrderForm';
 import Labs from './pages/Labs';
 import LabForm from './pages/LabForm';
+import Reports from './pages/Reports';
 import Login from './pages/Login';
 import { collectorsAPI, collectionOrdersAPI } from './api';
 
@@ -87,6 +88,9 @@ export default function App() {
           <Route path="labs"          element={<Labs />} />
           <Route path="labs/add"      element={<LabForm />} />
           <Route path="labs/edit/:id" element={<LabForm />} />
+
+          {/* Reports */}
+          <Route path="reports" element={<Reports />} />
 
           {/* Redirect old URLs */}
           <Route path="test-orders/*" element={<Navigate to="/collection-orders" replace />} />

@@ -16,8 +16,6 @@ const BLANK = {
   lab_tests:       [],
   collector:       '',
   tests:           [],
-  scheduled:       '',
-  status:          'Scheduled',
 };
 
 function parseJSON(val) {
@@ -423,8 +421,8 @@ export default function CollectionOrderForm({ rows, setRows }) {
           )}
         </Section>
 
-        {/* ══ SECTION 4: Collector & Schedule ═══════════════════════════════ */}
-        <Section icon="ti-user-check" title="Collector & Schedule">
+        {/* ══ SECTION 4: Collector ══════════════════════════════════════════ */}
+        <Section icon="ti-user-check" title="Collector">
           {/* Collector dropdown – active collectors only */}
           <div className="form-row">
             <label className="form-label">
@@ -454,32 +452,6 @@ export default function CollectionOrderForm({ rows, setRows }) {
                 ))}
               </select>
             )}
-          </div>
-
-          {/* Scheduled + Status */}
-          <div className="form-grid" style={{ marginTop: 14 }}>
-            <div className="form-row">
-              <label className="form-label">Scheduled Date &amp; Time</label>
-              <input
-                className="form-input"
-                value={form.scheduled}
-                onChange={e => set('scheduled', e.target.value)}
-                placeholder="DD Mon YYYY, HH:MM AM"
-              />
-            </div>
-            <div className="form-row">
-              <label className="form-label">Order Status</label>
-              <select
-                className="form-select"
-                value={form.status}
-                onChange={e => set('status', e.target.value)}
-              >
-                <option>Scheduled</option>
-                <option>In Transit</option>
-                <option>Collected</option>
-                <option>Failed</option>
-              </select>
-            </div>
           </div>
         </Section>
 

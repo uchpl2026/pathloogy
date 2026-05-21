@@ -64,3 +64,15 @@ export const labsAPI = {
   update: (id, d) => request('PUT',    `/labs/${id}`, d),
   remove: (id)    => request('DELETE', `/labs/${id}`),
 };
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+export const reportsAPI = {
+  get: (params) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v !== ''))
+    ).toString();
+    return request('GET', `/reports${qs ? '?' + qs : ''}`);
+  },
+  collectors: () => request('GET', '/reports/collectors'),
+  labs:        () => request('GET', '/reports/labs'),
+};
