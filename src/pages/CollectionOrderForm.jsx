@@ -1,23 +1,32 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { collectionOrdersAPI, pathologiesAPI } from '../api';
+import { collectionOrdersAPI, labsAPI, collectorsAPI } from '../api';
 
 const BLANK = {
-  patient: '',
-  collector: '',
-  tests: [],
-  address: '',
-  scheduled: '',
-  status: 'Scheduled',
+  patient:         '',
+  patient_phone:   '',
+  patient_email:   '',
+  address:         '',
+  billed_amount:   '',
+  amount_received: '',
+  payment_status:  'Not Paid',
+  payment_date:    '',
+  test_date:       '',
+  lab_name:        '',
+  lab_tests:       [],
+  collector:       '',
+  tests:           [],
+  scheduled:       '',
+  status:          'Scheduled',
 };
 
-function parseTests(val) {
+function parseJSON(val) {
   if (Array.isArray(val)) return val;
   try { return JSON.parse(val || '[]'); } catch { return []; }
 }
 
-// Pill badge for a test code
-function TestPill({ code, onRemove }) {
+/* ── Small pill to show a selected test ─────────────────────────────────── */
+function TestPill({ label, onRemove }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -27,12 +36,13 @@ function TestPill({ code, onRemove }) {
       border: '1px solid var(--accent-border, #bfdbfe)',
       fontWeight: 500,
     }}>
-      {code}
+      {label}
       {onRemove && (
         <button
           onClick={onRemove}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: 'inherit', display: 'flex' }}
-          aria-label={`Remove ${code}`}
+          style={{ background: 'none', border: 'none', cursor: 'pointer',
+                   padding: 0, lineHeight: 1, color: 'inherit', display: 'flex' }}
+          aria-label={`Remove ${label}`}
         >
           <i className="ti ti-x" style={{ fontSize: 11 }} />
         </button>
@@ -41,90 +51,120 @@ function TestPill({ code, onRemove }) {
   );
 }
 
-export default function CollectionOrderForm({ rows, collectors, setRows }) {
+/* ── Section header helper ───────────────────────────────────────────────── */
+function SectionHeader({ icon, title }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '10px 16px',
+      background: 'var(--bg-secondary)',
+      borderBottom: '1px solid var(--border)',
+      borderRadius: '10px 10px 0 0',
+    }}>
+      <i className={`ti ${icon}`} style={{ color: 'var(--accent)', fontSize: 15 }} />
+      <span style={{ fontWeight: 600, fontSize: 14 }}>{title}</span>
+    </div>
+  );
+}
+
+function Section({ icon, title, children, style }) {
+  return (
+    <div style={{
+      marginTop: 20,
+      border: '1px solid var(--border)',
+      borderRadius: 10,
+      overflow: 'hidden',
+      ...style,
+    }}>
+      <SectionHeader icon={icon} title={title} />
+      <div style={{ padding: 16 }}>{children}</div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+export default function CollectionOrderForm({ rows, setRows }) {
   const { id }   = useParams();
   const navigate = useNavigate();
   const editing  = Boolean(id);
 
-  const [form, setForm]             = useState(BLANK);
-  const [allPathologies, setAllPathologies] = useState([]);   // all pathology records
-  const [selectedPathology, setSelectedPathology] = useState(''); // selected category/group
-  const [busy, setBusy]             = useState(false);
-  const [error, setError]           = useState('');
-  const [loadingTests, setLoadingTests] = useState(false);
+  const [form, setForm]               = useState(BLANK);
+  const [labs, setLabs]               = useState([]);
+  const [activeCollectors, setActiveCollectors] = useState([]);
+  const [busy, setBusy]               = useState(false);
+  const [error, setError]             = useState('');
+  const [loading, setLoading]         = useState(true);
 
-  // Load all pathologies once
+  /* ── Load labs + active collectors on mount ─────────────────────────── */
   useEffect(() => {
-    setLoadingTests(true);
-    pathologiesAPI.list()
-      .then(setAllPathologies)
+    setLoading(true);
+    Promise.all([labsAPI.list(), collectorsAPI.listActive()])
+      .then(([labList, colList]) => {
+        setLabs(labList);
+        setActiveCollectors(colList);
+      })
       .catch(console.error)
-      .finally(() => setLoadingTests(false));
+      .finally(() => setLoading(false));
   }, []);
 
-  // Load form when editing
+  /* ── Load form when editing ─────────────────────────────────────────── */
   useEffect(() => {
     if (editing) {
       const existing = rows.find(r => String(r.id) === String(id));
+      const hydrate = data => setForm({
+        ...BLANK,
+        ...data,
+        tests:     parseJSON(data.tests),
+        lab_tests: parseJSON(data.lab_tests),
+      });
       if (existing) {
-        setForm({ ...existing, tests: parseTests(existing.tests) });
+        hydrate(existing);
       } else {
         collectionOrdersAPI.get(id)
-          .then(data => setForm({ ...data, tests: parseTests(data.tests) }))
+          .then(hydrate)
           .catch(() => navigate('/collection-orders', { replace: true }));
       }
     } else {
-      setForm({ ...BLANK, collector: collectors?.[0]?.name || '' });
+      setForm({ ...BLANK });
     }
   }, [editing, id]); // eslint-disable-line
 
-  const updateField = (key, value) => setForm(f => ({ ...f, [key]: value }));
+  const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
-  // Unique pathology categories derived from all pathologies
-  const pathologyGroups = useMemo(() => {
-    const seen = new Set();
-    return allPathologies
-      .filter(p => p.status === 'Active')
-      .reduce((acc, p) => {
-        if (!seen.has(p.category)) {
-          seen.add(p.category);
-          acc.push({ category: p.category });
-        }
-        return acc;
-      }, []);
-  }, [allPathologies]);
+  /* ── Derived: tests available for selected lab ──────────────────────── */
+  const selectedLab = useMemo(
+    () => labs.find(l => l.name === form.lab_name) || null,
+    [labs, form.lab_name]
+  );
 
-  // Tests available under the currently-selected pathology group
-  const testsForSelectedPathology = useMemo(() => {
-    if (!selectedPathology) return [];
-    return allPathologies.filter(p => p.category === selectedPathology && p.status === 'Active');
-  }, [allPathologies, selectedPathology]);
+  const labTestOptions = useMemo(
+    () => (selectedLab ? (selectedLab.available_tests || []) : []),
+    [selectedLab]
+  );
 
-  const selectedTests = parseTests(form.tests);
+  const selectedLabTests = parseJSON(form.lab_tests);
 
-  const toggleTest = (code) => {
+  const toggleLabTest = (testName) => {
     setForm(f => {
-      const current = parseTests(f.tests);
-      const next = current.includes(code)
-        ? current.filter(c => c !== code)
-        : [...current, code];
-      return { ...f, tests: next };
+      const current = parseJSON(f.lab_tests);
+      const next = current.includes(testName)
+        ? current.filter(t => t !== testName)
+        : [...current, testName];
+      return { ...f, lab_tests: next };
     });
   };
 
-  const removeTest = (code) => {
-    setForm(f => ({ ...f, tests: parseTests(f.tests).filter(c => c !== code) }));
-  };
-
+  /* ── Save ───────────────────────────────────────────────────────────── */
   const save = async () => {
     setError('');
-    if (!form.patient.trim()) { setError('Patient name is required.'); return; }
-    if (!form.collector)      { setError('Please select a collector.'); return; }
-    if (selectedTests.length === 0) { setError('Please select at least one test.'); return; }
+    if (!form.patient.trim())    { setError('Patient name is required.');      return; }
+    if (!form.collector)          { setError('Please select a collector.');     return; }
+    if (!form.lab_name)           { setError('Please select a lab.');           return; }
+    if (selectedLabTests.length === 0) { setError('Please select at least one test.'); return; }
 
     setBusy(true);
     try {
-      const payload = { ...form, tests: selectedTests };
+      const payload = { ...form, lab_tests: selectedLabTests, tests: selectedLabTests };
       if (editing) {
         const updated = await collectionOrdersAPI.update(form.id, payload);
         setRows(prev => prev.map(item => item.id === updated.id ? updated : item));
@@ -140,16 +180,19 @@ export default function CollectionOrderForm({ rows, collectors, setRows }) {
     }
   };
 
+  /* ── Render ─────────────────────────────────────────────────────────── */
   return (
     <div className="page-panel">
       <div className="page-header">
         <div>
           <h1>{editing ? 'Edit Collection Order' : 'Add Collection Order'}</h1>
           <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>
-            {editing ? 'Update the order details before saving.' : 'Fill in collection order details on this page.'}
+            {editing ? 'Update the order details before saving.' : 'Fill in collection order details below.'}
           </p>
         </div>
-        <button className="btn" onClick={() => navigate('/collection-orders')}>Back to Collection Orders</button>
+        <button className="btn" onClick={() => navigate('/collection-orders')}>
+          Back to Collection Orders
+        </button>
       </div>
 
       <div className="card" style={{ padding: 24 }}>
@@ -159,213 +202,294 @@ export default function CollectionOrderForm({ rows, collectors, setRows }) {
           </div>
         )}
 
-        {/* ── Patient & Collector ── */}
-        <div className="form-grid">
-          <div className="form-row">
-            <label className="form-label">Patient Name</label>
+        {/* ══ SECTION 1: Patient Details ═══════════════════════════════════ */}
+        <Section icon="ti-user" title="Patient Details">
+          {/* Row 1: Name + Phone */}
+          <div className="form-grid">
+            <div className="form-row">
+              <label className="form-label">
+                Patient Name <span style={{ color: 'var(--danger)' }}>*</span>
+              </label>
+              <input
+                className="form-input"
+                value={form.patient}
+                onChange={e => set('patient', e.target.value)}
+                placeholder="Full patient name"
+              />
+            </div>
+            <div className="form-row">
+              <label className="form-label">Patient Phone</label>
+              <input
+                className="form-input"
+                value={form.patient_phone}
+                onChange={e => set('patient_phone', e.target.value)}
+                placeholder="+91 XXXXXXXXXX"
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Email (full width) */}
+          <div className="form-row" style={{ marginTop: 14 }}>
+            <label className="form-label">Patient Email</label>
             <input
               className="form-input"
-              value={form.patient}
-              onChange={e => updateField('patient', e.target.value)}
-              placeholder="Patient name"
+              type="email"
+              value={form.patient_email}
+              onChange={e => set('patient_email', e.target.value)}
+              placeholder="patient@example.com"
             />
           </div>
-          <div className="form-row">
-            <label className="form-label">Collector / Lab</label>
-            <select
-              className="form-select"
-              value={form.collector}
-              onChange={e => {
-                updateField('collector', e.target.value);
-                updateField('tests', []);
-                setSelectedPathology('');
-              }}
-            >
-              {collectors.map(c => (
-                <option key={c.id} value={c.name}>{c.name} — {c.zone}</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* ── Test Selection: Step 1 – pick pathology group ── */}
-        <div style={{
-          marginTop: 20,
-          border: '1px solid var(--border)',
-          borderRadius: 10,
-          overflow: 'hidden',
-        }}>
-          {/* Header */}
-          <div style={{
-            padding: '12px 16px',
-            background: 'var(--bg-secondary)',
-            borderBottom: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <i className="ti ti-test-pipe" style={{ color: 'var(--accent)' }} />
-            <span style={{ fontWeight: 600, fontSize: 14 }}>Test Selection</span>
-            {selectedTests.length > 0 && (
-              <span style={{
-                marginLeft: 'auto', fontSize: 12, fontWeight: 500,
-                padding: '2px 10px', borderRadius: 20,
-                background: 'var(--accent-light, #eff6ff)',
-                color: 'var(--accent, #2563eb)',
-                border: '1px solid var(--accent-border, #bfdbfe)',
-              }}>
-                {selectedTests.length} selected
-              </span>
+          {/* Row 3: Address (full width) */}
+          <div className="form-row" style={{ marginTop: 14 }}>
+            <label className="form-label">Patient Address</label>
+            <textarea
+              className="form-textarea"
+              value={form.address}
+              onChange={e => set('address', e.target.value)}
+              placeholder="Full collection address"
+              rows={2}
+            />
+          </div>
+        </Section>
+
+        {/* ══ SECTION 2: Payment Details ════════════════════════════════════ */}
+        <Section icon="ti-currency-rupee" title="Payment Details">
+          <div className="form-grid">
+            <div className="form-row">
+              <label className="form-label">Billed Amount (₹)</label>
+              <input
+                className="form-input"
+                value={form.billed_amount}
+                onChange={e => set('billed_amount', e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="form-row">
+              <label className="form-label">Amount Received (₹)</label>
+              <input
+                className="form-input"
+                value={form.amount_received}
+                onChange={e => set('amount_received', e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="form-grid" style={{ marginTop: 14 }}>
+            <div className="form-row">
+              <label className="form-label">Payment Status</label>
+              <select
+                className="form-select"
+                value={form.payment_status}
+                onChange={e => set('payment_status', e.target.value)}
+              >
+                <option value="Not Paid">Not Paid</option>
+                <option value="Partially Paid">Partially Paid</option>
+                <option value="Full Paid">Full Paid</option>
+              </select>
+            </div>
+            <div className="form-row">
+              <label className="form-label">Date of Payment</label>
+              <input
+                className="form-input"
+                type="date"
+                value={form.payment_date}
+                onChange={e => set('payment_date', e.target.value)}
+              />
+            </div>
+          </div>
+        </Section>
+
+        {/* ══ SECTION 3: Lab & Test Selection ══════════════════════════════ */}
+        <Section icon="ti-flask" title="Lab & Test Selection">
+          {/* Row 1: Test Date */}
+          <div className="form-row" style={{ marginBottom: 14 }}>
+            <label className="form-label">Test Date</label>
+            <input
+              className="form-input"
+              type="date"
+              value={form.test_date}
+              onChange={e => set('test_date', e.target.value)}
+              style={{ maxWidth: 220 }}
+            />
+          </div>
+
+          {/* Step 1: Select Lab */}
+          <div className="form-row">
+            <label className="form-label">
+              <i className="ti ti-building-hospital" style={{ marginRight: 5, fontSize: 12 }} />
+              Step 1 — Select Lab
+            </label>
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
+                            border: '1px solid var(--border)', borderRadius: 6,
+                            color: 'var(--text-secondary)', fontSize: 13 }}>
+                <i className="ti ti-loader-2 spin" /> Loading labs…
+              </div>
+            ) : (
+              <select
+                className="form-select"
+                value={form.lab_name}
+                onChange={e => {
+                  set('lab_name', e.target.value);
+                  setForm(f => ({ ...f, lab_name: e.target.value, lab_tests: [] }));
+                }}
+              >
+                <option value="">— Choose a lab —</option>
+                {labs.filter(l => l.status === 'Active').map(l => (
+                  <option key={l.id} value={l.name}>{l.name}</option>
+                ))}
+              </select>
             )}
           </div>
 
-          <div style={{ padding: 16 }}>
-            {/* Selected tests summary */}
-            {selectedTests.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Selected Tests
+          {/* Step 2: Select Tests for chosen lab */}
+          {form.lab_name && (
+            <div style={{ marginTop: 16 }}>
+              {/* Selected tests summary */}
+              {selectedLabTests.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)',
+                                marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Selected Tests ({selectedLabTests.length})
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {selectedLabTests.map(t => (
+                      <TestPill key={t} label={t} onRemove={() => toggleLabTest(t)} />
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {selectedTests.map(code => {
-                    const p = allPathologies.find(x => x.code === code);
+              )}
+
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)',
+                            marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <i className="ti ti-checkbox" style={{ marginRight: 4 }} />
+                Step 2 — Available Tests in {form.lab_name}
+              </div>
+
+              {labTestOptions.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                  No tests configured for this lab. Add tests in Lab Management.
+                </p>
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                  gap: 10,
+                }}>
+                  {labTestOptions.map(t => {
+                    const checked = selectedLabTests.includes(t.test_name);
                     return (
-                      <TestPill
-                        key={code}
-                        code={p ? `${p.name} (${code})` : code}
-                        onRemove={() => removeTest(code)}
-                      />
+                      <label
+                        key={t.id}
+                        style={{
+                          display: 'flex', alignItems: 'flex-start', gap: 10,
+                          padding: '10px 14px', borderRadius: 8,
+                          border: `1.5px solid ${checked ? 'var(--accent, #2563eb)' : 'var(--border)'}`,
+                          background: checked ? 'var(--accent-light, #eff6ff)' : 'var(--bg-secondary)',
+                          cursor: 'pointer',
+                          transition: 'border-color .15s, background .15s',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleLabTest(t.test_name)}
+                          style={{ marginTop: 3, accentColor: 'var(--accent)' }}
+                        />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 500, fontSize: 13 }}>{t.test_name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3,
+                                        display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
+                            {t.deposit_amount && <span>Deposit: ₹{t.deposit_amount}</span>}
+                            {t.patient_cost   && <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>Patient: ₹{t.patient_cost}</span>}
+                          </div>
+                        </div>
+                      </label>
                     );
                   })}
                 </div>
-              </div>
-            )}
-
-            {/* Step 1: Select Pathology */}
-            <div className="form-grid" style={{ alignItems: 'flex-end' }}>
-              <div className="form-row" style={{ margin: 0 }}>
-                <label className="form-label">
-                  <i className="ti ti-filter" style={{ marginRight: 4, fontSize: 12 }} />
-                  Step 1 — Select Pathology
-                </label>
-                {loadingTests ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-secondary)', fontSize: 13 }}>
-                    <i className="ti ti-loader-2 spin" /> Loading pathologies…
-                  </div>
-                ) : (
-                  <select
-                    className="form-select"
-                    value={selectedPathology}
-                    onChange={e => setSelectedPathology(e.target.value)}
-                  >
-                    <option value="">— Choose a pathology —</option>
-                    {pathologyGroups.map(g => (
-                      <option key={g.category} value={g.category}>{g.category}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
+              )}
             </div>
+          )}
 
-            {/* Step 2: Select Tests for chosen pathology */}
-            {selectedPathology && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  <i className="ti ti-checkbox" style={{ marginRight: 4 }} />
-                  Step 2 — Available Tests in {selectedPathology}
-                </div>
+          {!form.lab_name && !loading && (
+            <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-secondary)',
+                        display: 'flex', alignItems: 'center', gap: 6 }}>
+              <i className="ti ti-arrow-up" style={{ fontSize: 14 }} />
+              Select a lab above to see available tests.
+            </p>
+          )}
+        </Section>
 
-                {testsForSelectedPathology.length === 0 ? (
-                  <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>No active tests in this category.</p>
-                ) : (
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                    gap: 10,
-                  }}>
-                    {testsForSelectedPathology.map(p => {
-                      const checked = selectedTests.includes(p.code);
-                      return (
-                        <label
-                          key={p.code}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: 10,
-                            padding: '10px 14px',
-                            borderRadius: 8,
-                            border: `1.5px solid ${checked ? 'var(--accent, #2563eb)' : 'var(--border)'}`,
-                            background: checked ? 'var(--accent-light, #eff6ff)' : 'var(--bg-secondary)',
-                            cursor: 'pointer',
-                            transition: 'border-color .15s, background .15s',
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleTest(p.code)}
-                            style={{ marginTop: 3, accentColor: 'var(--accent)' }}
-                          />
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontWeight: 500, fontSize: 13 }}>{p.name}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 3, display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
-                              <span><code style={{ fontSize: 10 }}>{p.code}</code></span>
-                              {p.clientCode && <span>Client: <code style={{ fontSize: 10 }}>{p.clientCode}</code></span>}
-                              <span>{p.turnaround}</span>
-                              <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{p.price}</span>
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
+        {/* ══ SECTION 4: Collector & Schedule ═══════════════════════════════ */}
+        <Section icon="ti-user-check" title="Collector & Schedule">
+          {/* Collector dropdown – active collectors only */}
+          <div className="form-row">
+            <label className="form-label">
+              Collector <span style={{ color: 'var(--danger)' }}>*</span>
+            </label>
+            {loading ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
+                            border: '1px solid var(--border)', borderRadius: 6,
+                            color: 'var(--text-secondary)', fontSize: 13 }}>
+                <i className="ti ti-loader-2 spin" /> Loading collectors…
               </div>
-            )}
-
-            {!selectedPathology && !loadingTests && (
-              <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <i className="ti ti-arrow-up" style={{ fontSize: 14 }} />
-                Select a pathology above to see available tests.
+            ) : activeCollectors.length === 0 ? (
+              <p style={{ color: 'var(--danger)', fontSize: 13 }}>
+                No active collectors found. Please add collectors first.
               </p>
+            ) : (
+              <select
+                className="form-select"
+                value={form.collector}
+                onChange={e => set('collector', e.target.value)}
+              >
+                <option value="">— Select collector —</option>
+                {activeCollectors.map(c => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}{c.phone ? ` — ${c.phone}` : ''}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
-        </div>
 
-        {/* ── Address & Schedule ── */}
-        <div className="form-row" style={{ marginTop: 16 }}>
-          <label className="form-label">Patient Address</label>
-          <textarea
-            className="form-textarea"
-            value={form.address}
-            onChange={e => updateField('address', e.target.value)}
-            placeholder="Full collection address"
-          />
-        </div>
-
-        <div className="form-grid">
-          <div className="form-row">
-            <label className="form-label">Scheduled Date &amp; Time</label>
-            <input
-              className="form-input"
-              value={form.scheduled}
-              onChange={e => updateField('scheduled', e.target.value)}
-              placeholder="DD Mon YYYY, HH:MM AM"
-            />
+          {/* Scheduled + Status */}
+          <div className="form-grid" style={{ marginTop: 14 }}>
+            <div className="form-row">
+              <label className="form-label">Scheduled Date &amp; Time</label>
+              <input
+                className="form-input"
+                value={form.scheduled}
+                onChange={e => set('scheduled', e.target.value)}
+                placeholder="DD Mon YYYY, HH:MM AM"
+              />
+            </div>
+            <div className="form-row">
+              <label className="form-label">Order Status</label>
+              <select
+                className="form-select"
+                value={form.status}
+                onChange={e => set('status', e.target.value)}
+              >
+                <option>Scheduled</option>
+                <option>In Transit</option>
+                <option>Collected</option>
+                <option>Failed</option>
+              </select>
+            </div>
           </div>
-          <div className="form-row">
-            <label className="form-label">Status</label>
-            <select className="form-select" value={form.status} onChange={e => updateField('status', e.target.value)}>
-              <option>Scheduled</option>
-              <option>In Transit</option>
-              <option>Collected</option>
-              <option>Failed</option>
-            </select>
-          </div>
-        </div>
+        </Section>
 
+        {/* ══ Actions ════════════════════════════════════════════════════════ */}
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <button className="btn" onClick={() => navigate('/collection-orders')}>Cancel</button>
           <button className="btn btn-primary" onClick={save} disabled={busy}>
-            {busy ? <><i className="ti ti-loader-2 spin" /> Saving…</> : editing ? 'Save Changes' : 'Create Order'}
+            {busy
+              ? <><i className="ti ti-loader-2 spin" /> Saving…</>
+              : editing ? 'Save Changes' : 'Create Order'}
           </button>
         </div>
       </div>

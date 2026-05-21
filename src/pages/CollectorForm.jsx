@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { collectorsAPI } from '../api';
 
-const BLANK = { name: '', phone: '', email: '' };
+const BLANK = { name: '', phone: '', email: '', status: 'Active' };
 
 export default function CollectorForm({ rows, setRows }) {
   const { id }   = useParams();
@@ -84,10 +84,19 @@ export default function CollectorForm({ rows, setRows }) {
           </div>
         </div>
 
-        <div className="form-row" style={{ marginTop: 16 }}>
-          <label className="form-label">Email</label>
-          <input className="form-input" type="email" value={form.email}
-            onChange={e => set('email', e.target.value)} placeholder="collector@example.com" />
+        <div className="form-grid" style={{ marginTop: 16 }}>
+          <div className="form-row">
+            <label className="form-label">Email</label>
+            <input className="form-input" type="email" value={form.email}
+              onChange={e => set('email', e.target.value)} placeholder="collector@example.com" />
+          </div>
+          <div className="form-row">
+            <label className="form-label">Status</label>
+            <select className="form-select" value={form.status} onChange={e => set('status', e.target.value)}>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>

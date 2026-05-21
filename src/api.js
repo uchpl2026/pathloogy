@@ -29,21 +29,22 @@ export const dashboardAPI = {
 
 // ── Pathologies ───────────────────────────────────────────────────────────────
 export const pathologiesAPI = {
-  list:      ()         => request('GET',    '/pathologies'),
-  listForLab: (lab)     => request('GET',    `/pathologies?lab=${encodeURIComponent(lab)}`),
-  get:       (id)       => request('GET',    `/pathologies/${id}`),
-  create:    (data)     => request('POST',   '/pathologies', data),
-  update:    (id, d)    => request('PUT',    `/pathologies/${id}`, d),
-  remove:    (id)       => request('DELETE', `/pathologies/${id}`),
+  list:       ()      => request('GET',    '/pathologies'),
+  listForLab: (lab)   => request('GET',    `/pathologies?lab=${encodeURIComponent(lab)}`),
+  get:        (id)    => request('GET',    `/pathologies/${id}`),
+  create:     (data)  => request('POST',   '/pathologies', data),
+  update:     (id, d) => request('PUT',    `/pathologies/${id}`, d),
+  remove:     (id)    => request('DELETE', `/pathologies/${id}`),
 };
 
 // ── Collectors ────────────────────────────────────────────────────────────────
 export const collectorsAPI = {
-  list:   ()      => request('GET',    '/collectors'),
-  get:    (id)    => request('GET',    `/collectors/${id}`),
-  create: (data)  => request('POST',   '/collectors', data),
-  update: (id, d) => request('PUT',    `/collectors/${id}`, d),
-  remove: (id)    => request('DELETE', `/collectors/${id}`),
+  list:       ()      => request('GET',    '/collectors'),
+  listActive: ()      => request('GET',    '/collectors/active'),
+  get:        (id)    => request('GET',    `/collectors/${id}`),
+  create:     (data)  => request('POST',   '/collectors', data),
+  update:     (id, d) => request('PUT',    `/collectors/${id}`, d),
+  remove:     (id)    => request('DELETE', `/collectors/${id}`),
 };
 
 // ── Collection Orders ─────────────────────────────────────────────────────────

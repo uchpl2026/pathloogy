@@ -13,23 +13,16 @@ import LabForm from './pages/LabForm';
 import Login from './pages/Login';
 import { collectorsAPI, collectionOrdersAPI } from './api';
 
-// ── Persist session across page refreshes ────────────────────────────────────
+// ── Persist session ───────────────────────────────────────────────────────────
 const SESSION_KEY = 'pathlab_user';
-
 function loadSession() {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  try { const r = localStorage.getItem(SESSION_KEY); return r ? JSON.parse(r) : null; }
+  catch { return null; }
 }
-
 function saveSession(user) {
   if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
   else      localStorage.removeItem(SESSION_KEY);
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [user, setUser]                         = useState(loadSession);
@@ -82,17 +75,20 @@ export default function App() {
           <Route path="collectors/add"      element={<CollectorForm rows={collectors} setRows={setCollectors} />} />
           <Route path="collectors/edit/:id" element={<CollectorForm rows={collectors} setRows={setCollectors} />} />
 
-          {/* Collection Orders (merged with test orders) */}
-          <Route path="collection-orders"          element={<CollectionOrders rows={collectionOrders} setRows={setCollectionOrders} />} />
-          <Route path="collection-orders/add"      element={<CollectionOrderForm rows={collectionOrders} collectors={collectors} setRows={setCollectionOrders} />} />
-          <Route path="collection-orders/edit/:id" element={<CollectionOrderForm rows={collectionOrders} collectors={collectors} setRows={setCollectionOrders} />} />
+          {/* Collection Orders – CollectionOrderForm fetches labs & active collectors itself */}
+          <Route path="collection-orders"
+            element={<CollectionOrders rows={collectionOrders} setRows={setCollectionOrders} />} />
+          <Route path="collection-orders/add"
+            element={<CollectionOrderForm rows={collectionOrders} setRows={setCollectionOrders} />} />
+          <Route path="collection-orders/edit/:id"
+            element={<CollectionOrderForm rows={collectionOrders} setRows={setCollectionOrders} />} />
 
           {/* Labs */}
           <Route path="labs"          element={<Labs />} />
           <Route path="labs/add"      element={<LabForm />} />
           <Route path="labs/edit/:id" element={<LabForm />} />
 
-          {/* Redirect old test-orders URLs */}
+          {/* Redirect old URLs */}
           <Route path="test-orders/*" element={<Navigate to="/collection-orders" replace />} />
         </Route>
       </Routes>
