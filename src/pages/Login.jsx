@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import './Login.css';
+import { authAPI } from '../api';
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [error, setError]             = useState('');
+  const [loading, setLoading]         = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -16,15 +17,14 @@ export default function Login({ onLogin }) {
       return;
     }
     setLoading(true);
-    // Simulate async auth — replace with real API call
-    setTimeout(() => {
-      if (email === 'admin@pathlab.com' && password === 'password') {
-        onLogin({ name: 'Admin', email });
-      } else {
-        setError('Invalid email or password. Try admin@pathlab.com / password');
-        setLoading(false);
-      }
-    }, 800);
+    try {
+      const { user } = await authAPI.login(email, password);
+      onLogin(user);
+    } catch (err) {
+      setError(err.message || 'Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,10 +46,10 @@ export default function Login({ onLogin }) {
           </p>
           <div className="login-features">
             {[
-              { icon: 'ti-virus',          text: 'Pathology tracking'       },
-              { icon: 'ti-user-check',     text: 'Collector management'     },
-              { icon: 'ti-clipboard-list', text: 'Test & collection orders'  },
-              { icon: 'ti-chart-bar',      text: 'Real-time dashboard'      },
+              { icon: 'ti-virus',          text: 'Pathology tracking'      },
+              { icon: 'ti-user-check',     text: 'Collector management'    },
+              { icon: 'ti-clipboard-list', text: 'Test & collection orders' },
+              { icon: 'ti-chart-bar',      text: 'Real-time dashboard'     },
             ].map(f => (
               <div key={f.text} className="login-feature-item">
                 <span className="login-feature-icon"><i className={`ti ${f.icon}`} /></span>
@@ -121,11 +121,7 @@ export default function Login({ onLogin }) {
               <a href="#forgot" className="login-forgot" onClick={e => e.preventDefault()}>Forgot password?</a>
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary login-btn"
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
               {loading
                 ? <><i className="ti ti-loader-2 spin" /> Signing in…</>
                 : <><i className="ti ti-login" /> Sign in</>

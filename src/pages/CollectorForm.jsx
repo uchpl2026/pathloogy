@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { nextId } from '../utils';
+import { collectorsAPI } from '../api';
 
 const ZONES = ['North Kolkata', 'South Kolkata', 'East Kolkata', 'West Kolkata', 'Central'];
 const BLANK = { name: '', empId: '', phone: '', zone: 'North Kolkata', samples: 0, status: 'On Duty' };
 
 export default function CollectorForm({ rows, setRows }) {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const editing = Boolean(id);
-  const [form, setForm] = useState(BLANK);
+  const { id }     = useParams();
+  const navigate   = useNavigate();
+  const editing    = Boolean(id);
+  const [form, setForm]   = useState(BLANK);
+  const [busy, setBusy]   = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (editing) {
@@ -17,22 +19,35 @@ export default function CollectorForm({ rows, setRows }) {
       if (existing) {
         setForm(existing);
       } else {
-        navigate('/collectors', { replace: true });
+        // Try fetching from API in case user navigated directly
+        collectorsAPI.get(id)
+          .then(setForm)
+          .catch(() => navigate('/collectors', { replace: true }));
       }
     } else {
       setForm(BLANK);
     }
-  }, [editing, id, rows, navigate]);
+  }, [editing, id]); // eslint-disable-line
 
   const updateField = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
-  const save = () => {
-    if (editing) {
-      setRows(prev => prev.map(item => item.id === form.id ? form : item));
-    } else {
-      setRows(prev => [...prev, { ...form, id: nextId(prev) }]);
+  const save = async () => {
+    setError('');
+    setBusy(true);
+    try {
+      if (editing) {
+        const updated = await collectorsAPI.update(form.id, form);
+        setRows(prev => prev.map(item => item.id === updated.id ? updated : item));
+      } else {
+        const created = await collectorsAPI.create(form);
+        setRows(prev => [...prev, created]);
+      }
+      navigate('/collectors');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
     }
-    navigate('/collectors');
   };
 
   return (
@@ -48,6 +63,12 @@ export default function CollectorForm({ rows, setRows }) {
       </div>
 
       <div className="card" style={{ padding: 24 }}>
+        {error && (
+          <div className="login-error" style={{ marginBottom: 16 }} role="alert">
+            <i className="ti ti-alert-circle" /> {error}
+          </div>
+        )}
+
         <div className="form-grid">
           <div className="form-row">
             <label className="form-label">Full Name</label>
@@ -83,7 +104,9 @@ export default function CollectorForm({ rows, setRows }) {
 
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <button className="btn" onClick={() => navigate('/collectors')}>Cancel</button>
-          <button className="btn btn-primary" onClick={save}>{editing ? 'Save Changes' : 'Add Collector'}</button>
+          <button className="btn btn-primary" onClick={save} disabled={busy}>
+            {busy ? <><i className="ti ti-loader-2 spin" /> Saving…</> : editing ? 'Save Changes' : 'Add Collector'}
+          </button>
         </div>
       </div>
     </div>

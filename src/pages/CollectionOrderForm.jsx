@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { nextId } from '../utils';
+import { collectionOrdersAPI } from '../api';
 
 const BLANK = {
   patient: '',
@@ -11,10 +11,12 @@ const BLANK = {
 };
 
 export default function CollectionOrderForm({ rows, collectors, setRows }) {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const editing = Boolean(id);
-  const [form, setForm] = useState(BLANK);
+  const { id }     = useParams();
+  const navigate   = useNavigate();
+  const editing    = Boolean(id);
+  const [form, setForm]   = useState(BLANK);
+  const [busy, setBusy]   = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (editing) {
@@ -22,23 +24,34 @@ export default function CollectionOrderForm({ rows, collectors, setRows }) {
       if (existing) {
         setForm(existing);
       } else {
-        navigate('/collection-orders', { replace: true });
+        collectionOrdersAPI.get(id)
+          .then(setForm)
+          .catch(() => navigate('/collection-orders', { replace: true }));
       }
     } else {
       setForm({ ...BLANK, collector: collectors?.[0]?.name || '' });
     }
-  }, [editing, id, rows, collectors, navigate]);
+  }, [editing, id]); // eslint-disable-line
 
   const updateField = (key, value) => setForm(f => ({ ...f, [key]: value }));
 
-  const save = () => {
-    if (editing) {
-      setRows(prev => prev.map(item => item.id === form.id ? form : item));
-    } else {
-      const next = nextId(rows);
-      setRows(prev => [...prev, { ...form, id: next, orderId: `CO-NEW${next}` }]);
+  const save = async () => {
+    setError('');
+    setBusy(true);
+    try {
+      if (editing) {
+        const updated = await collectionOrdersAPI.update(form.id, form);
+        setRows(prev => prev.map(item => item.id === updated.id ? updated : item));
+      } else {
+        const created = await collectionOrdersAPI.create(form);
+        setRows(prev => [...prev, created]);
+      }
+      navigate('/collection-orders');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
     }
-    navigate('/collection-orders');
   };
 
   return (
@@ -54,6 +67,12 @@ export default function CollectionOrderForm({ rows, collectors, setRows }) {
       </div>
 
       <div className="card" style={{ padding: 24 }}>
+        {error && (
+          <div className="login-error" style={{ marginBottom: 16 }} role="alert">
+            <i className="ti ti-alert-circle" /> {error}
+          </div>
+        )}
+
         <div className="form-grid">
           <div className="form-row">
             <label className="form-label">Patient Name</label>
@@ -74,7 +93,7 @@ export default function CollectionOrderForm({ rows, collectors, setRows }) {
 
         <div className="form-grid">
           <div className="form-row">
-            <label className="form-label">Scheduled Date & Time</label>
+            <label className="form-label">Scheduled Date &amp; Time</label>
             <input className="form-input" value={form.scheduled} onChange={e => updateField('scheduled', e.target.value)} placeholder="DD Mon YYYY, HH:MM AM" />
           </div>
           <div className="form-row">
@@ -90,7 +109,9 @@ export default function CollectionOrderForm({ rows, collectors, setRows }) {
 
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <button className="btn" onClick={() => navigate('/collection-orders')}>Cancel</button>
-          <button className="btn btn-primary" onClick={save}>{editing ? 'Save Changes' : 'Create Order'}</button>
+          <button className="btn btn-primary" onClick={save} disabled={busy}>
+            {busy ? <><i className="ti ti-loader-2 spin" /> Saving…</> : editing ? 'Save Changes' : 'Create Order'}
+          </button>
         </div>
       </div>
     </div>

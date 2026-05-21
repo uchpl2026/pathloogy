@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CrudTable from '../components/CrudTable';
 import StatusBadge from '../components/StatusBadge';
 import Avatar from '../components/Avatar';
+import { collectorsAPI } from '../api';
 
 const COLUMNS = [
   {
@@ -33,9 +34,22 @@ const COLUMNS = [
 export default function Collectors({ rows, setRows }) {
   const navigate = useNavigate();
 
-  const openAdd = () => navigate('/collectors/add');
+  // Refresh list on mount
+  useEffect(() => {
+    collectorsAPI.list().then(setRows).catch(console.error);
+  }, []); // eslint-disable-line
+
+  const openAdd  = ()  => navigate('/collectors/add');
   const openEdit = row => navigate(`/collectors/edit/${row.id}`);
-  const del = id => setRows(r => r.filter(x => x.id !== id));
+
+  const del = async (id) => {
+    try {
+      await collectorsAPI.remove(id);
+      setRows(r => r.filter(x => x.id !== id));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <CrudTable

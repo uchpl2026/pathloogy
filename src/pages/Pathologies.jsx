@@ -1,12 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CrudTable from '../components/CrudTable';
-import Modal from '../components/Modal';
 import StatusBadge from '../components/StatusBadge';
-import { pathologiesData } from '../data/mockData';
-import { nextId } from '../utils';
-
-const CATEGORIES = ['Hematology', 'Biochemistry', 'Endocrinology', 'Diabetes', 'Microbiology', 'Immunology'];
-const BLANK = { name: '', code: '', category: 'Hematology', turnaround: '', price: '', status: 'Active' };
+import { pathologiesAPI } from '../api';
 
 const COLUMNS = [
   {
@@ -27,81 +23,30 @@ const COLUMNS = [
 ];
 
 export default function Pathologies() {
-  const [rows, setRows]       = useState(pathologiesData);
-  const [modal, setModal]     = useState(null);   // null | 'add' | 'edit'
-  const [form, setForm]       = useState(BLANK);
+  const [rows, setRows] = useState([]);
+  const navigate = useNavigate();
 
-  const openAdd  = ()      => { setForm(BLANK); setModal('add'); };
-  const openEdit = row     => { setForm({ ...row }); setModal('edit'); };
-  const close    = ()      => setModal(null);
-  const set      = (k, v)  => setForm(f => ({ ...f, [k]: v }));
+  useEffect(() => {
+    pathologiesAPI.list().then(setRows).catch(console.error);
+  }, []);
 
-  const save = () => {
-    if (modal === 'add') {
-      setRows(r => [...r, { ...form, id: nextId(r) }]);
-    } else {
-      setRows(r => r.map(x => x.id === form.id ? form : x));
+  const del = async (id) => {
+    try {
+      await pathologiesAPI.remove(id);
+      setRows(r => r.filter(x => x.id !== id));
+    } catch (err) {
+      alert(err.message);
     }
-    close();
   };
 
-  const del = id => setRows(r => r.filter(x => x.id !== id));
-
   return (
-    <>
-      <CrudTable
-        columns={COLUMNS}
-        rows={rows}
-        onAdd={openAdd}
-        onEdit={openEdit}
-        onDelete={del}
-        addLabel="Add Pathology"
-      />
-
-      {modal && (
-        <Modal
-          title={modal === 'add' ? 'Add Pathology' : 'Edit Pathology'}
-          onClose={close}
-          onSave={save}
-          saveLabel={modal === 'add' ? 'Add Record' : 'Save Changes'}
-        >
-          <div className="form-grid">
-            <div className="form-row">
-              <label className="form-label">Test Name</label>
-              <input className="form-input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Blood Glucose" />
-            </div>
-            <div className="form-row">
-              <label className="form-label">Test Code</label>
-              <input className="form-input" value={form.code} onChange={e => set('code', e.target.value)} placeholder="e.g. BGL-006" />
-            </div>
-          </div>
-          <div className="form-grid">
-            <div className="form-row">
-              <label className="form-label">Category</label>
-              <select className="form-select" value={form.category} onChange={e => set('category', e.target.value)}>
-                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="form-row">
-              <label className="form-label">Turnaround Time</label>
-              <input className="form-input" value={form.turnaround} onChange={e => set('turnaround', e.target.value)} placeholder="e.g. 4 hrs" />
-            </div>
-          </div>
-          <div className="form-grid">
-            <div className="form-row">
-              <label className="form-label">Price</label>
-              <input className="form-input" value={form.price} onChange={e => set('price', e.target.value)} placeholder="₹0" />
-            </div>
-            <div className="form-row">
-              <label className="form-label">Status</label>
-              <select className="form-select" value={form.status} onChange={e => set('status', e.target.value)}>
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-            </div>
-          </div>
-        </Modal>
-      )}
-    </>
+    <CrudTable
+      columns={COLUMNS}
+      rows={rows}
+      onAdd={() => navigate('/pathologies/add')}
+      onEdit={row => navigate(`/pathologies/edit/${row.id}`)}
+      onDelete={del}
+      addLabel="Add Pathology"
+    />
   );
 }
