@@ -6,7 +6,6 @@ import './Dashboard.css';
 const STAT_CONFIG = [
   { key: 'pathologies',      label: 'Pathologies',       icon: 'ti-virus',           route: '/pathologies',       deltaKey: null,                         deltaLabel: 'total tests' },
   { key: 'collectors',       label: 'Collectors',        icon: 'ti-user-check',      route: '/collectors',        deltaKey: 'collectorsOnDuty',           deltaLabel: 'on duty',    up: true  },
-  { key: 'testOrders',       label: 'Test Orders',       icon: 'ti-clipboard-list',  route: '/test-orders',       deltaKey: 'testOrdersPending',          deltaLabel: 'pending',    up: false },
   { key: 'collectionOrders', label: 'Collection Orders', icon: 'ti-truck-delivery',  route: '/collection-orders', deltaKey: 'collectionOrdersScheduled',  deltaLabel: 'scheduled',  up: true  },
 ];
 

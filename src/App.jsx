@@ -6,10 +6,10 @@ import Pathologies from './pages/Pathologies';
 import PathologyForm from './pages/PathologyForm';
 import Collectors from './pages/Collectors';
 import CollectorForm from './pages/CollectorForm';
-import TestOrders from './pages/TestOrders';
-import TestOrderForm from './pages/TestOrderForm';
 import CollectionOrders from './pages/CollectionOrders';
 import CollectionOrderForm from './pages/CollectionOrderForm';
+import Labs from './pages/Labs';
+import LabForm from './pages/LabForm';
 import Login from './pages/Login';
 import { collectorsAPI, collectionOrdersAPI } from './api';
 
@@ -82,15 +82,18 @@ export default function App() {
           <Route path="collectors/add"      element={<CollectorForm rows={collectors} setRows={setCollectors} />} />
           <Route path="collectors/edit/:id" element={<CollectorForm rows={collectors} setRows={setCollectors} />} />
 
-          {/* Test Orders */}
-          <Route path="test-orders"          element={<TestOrders />} />
-          <Route path="test-orders/add"      element={<TestOrderForm />} />
-          <Route path="test-orders/edit/:id" element={<TestOrderForm />} />
-
-          {/* Collection Orders */}
+          {/* Collection Orders (merged with test orders) */}
           <Route path="collection-orders"          element={<CollectionOrders rows={collectionOrders} setRows={setCollectionOrders} />} />
           <Route path="collection-orders/add"      element={<CollectionOrderForm rows={collectionOrders} collectors={collectors} setRows={setCollectionOrders} />} />
           <Route path="collection-orders/edit/:id" element={<CollectionOrderForm rows={collectionOrders} collectors={collectors} setRows={setCollectionOrders} />} />
+
+          {/* Labs */}
+          <Route path="labs"          element={<Labs />} />
+          <Route path="labs/add"      element={<LabForm />} />
+          <Route path="labs/edit/:id" element={<LabForm />} />
+
+          {/* Redirect old test-orders URLs */}
+          <Route path="test-orders/*" element={<Navigate to="/collection-orders" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

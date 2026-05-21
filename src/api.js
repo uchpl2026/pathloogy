@@ -29,11 +29,12 @@ export const dashboardAPI = {
 
 // ── Pathologies ───────────────────────────────────────────────────────────────
 export const pathologiesAPI = {
-  list:   ()      => request('GET',    '/pathologies'),
-  get:    (id)    => request('GET',    `/pathologies/${id}`),
-  create: (data)  => request('POST',   '/pathologies', data),
-  update: (id, d) => request('PUT',    `/pathologies/${id}`, d),
-  remove: (id)    => request('DELETE', `/pathologies/${id}`),
+  list:      ()         => request('GET',    '/pathologies'),
+  listForLab: (lab)     => request('GET',    `/pathologies?lab=${encodeURIComponent(lab)}`),
+  get:       (id)       => request('GET',    `/pathologies/${id}`),
+  create:    (data)     => request('POST',   '/pathologies', data),
+  update:    (id, d)    => request('PUT',    `/pathologies/${id}`, d),
+  remove:    (id)       => request('DELETE', `/pathologies/${id}`),
 };
 
 // ── Collectors ────────────────────────────────────────────────────────────────
@@ -45,15 +46,6 @@ export const collectorsAPI = {
   remove: (id)    => request('DELETE', `/collectors/${id}`),
 };
 
-// ── Test Orders ───────────────────────────────────────────────────────────────
-export const testOrdersAPI = {
-  list:   ()      => request('GET',    '/test-orders'),
-  get:    (id)    => request('GET',    `/test-orders/${id}`),
-  create: (data)  => request('POST',   '/test-orders', data),
-  update: (id, d) => request('PUT',    `/test-orders/${id}`, d),
-  remove: (id)    => request('DELETE', `/test-orders/${id}`),
-};
-
 // ── Collection Orders ─────────────────────────────────────────────────────────
 export const collectionOrdersAPI = {
   list:   ()      => request('GET',    '/collection-orders'),
@@ -61,4 +53,13 @@ export const collectionOrdersAPI = {
   create: (data)  => request('POST',   '/collection-orders', data),
   update: (id, d) => request('PUT',    `/collection-orders/${id}`, d),
   remove: (id)    => request('DELETE', `/collection-orders/${id}`),
+};
+
+// ── Labs ──────────────────────────────────────────────────────────────────────
+export const labsAPI = {
+  list:   ()      => request('GET',    '/labs'),
+  get:    (id)    => request('GET',    `/labs/${id}`),
+  create: (data)  => request('POST',   '/labs', data),
+  update: (id, d) => request('PUT',    `/labs/${id}`, d),
+  remove: (id)    => request('DELETE', `/labs/${id}`),
 };

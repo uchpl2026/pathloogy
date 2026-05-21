@@ -13,6 +13,12 @@ const COLUMNS = [
     key: 'code', label: 'Code',
     render: r => <code style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '2px 7px', borderRadius: 4 }}>{r.code}</code>,
   },
+  {
+    key: 'clientCode', label: 'Client Code',
+    render: r => r.clientCode
+      ? <code style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '2px 7px', borderRadius: 4, color: 'var(--text-secondary)' }}>{r.clientCode}</code>
+      : <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>—</span>,
+  },
   { key: 'category',   label: 'Category'   },
   { key: 'turnaround', label: 'Turnaround' },
   { key: 'price',      label: 'Price'      },

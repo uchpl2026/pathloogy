@@ -5,6 +5,12 @@ import StatusBadge from '../components/StatusBadge';
 import Avatar from '../components/Avatar';
 import { collectionOrdersAPI } from '../api';
 
+// Parse tests field safely
+function parseTests(val) {
+  if (Array.isArray(val)) return val;
+  try { return JSON.parse(val || '[]'); } catch { return []; }
+}
+
 const COLUMNS = [
   {
     key: 'orderId', label: 'Order ID',
@@ -27,6 +33,28 @@ const COLUMNS = [
         <span>{r.collector}</span>
       </div>
     ),
+  },
+  {
+    key: 'tests', label: 'Tests',
+    render: r => {
+      const tests = parseTests(r.tests);
+      if (!tests.length) return <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>—</span>;
+      return (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {tests.map(code => (
+            <span key={code} style={{
+              fontSize: 11,
+              padding: '2px 7px',
+              borderRadius: 12,
+              background: 'var(--accent-light, #eff6ff)',
+              color: 'var(--accent, #2563eb)',
+              fontWeight: 500,
+              border: '1px solid var(--accent-border, #bfdbfe)',
+            }}>{code}</span>
+          ))}
+        </div>
+      );
+    },
   },
   {
     key: 'address', label: 'Address',

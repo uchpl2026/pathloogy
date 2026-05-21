@@ -4,9 +4,9 @@ import './Layout.css';
 
 const NAV = [
   { to: '/dashboard',          icon: 'ti-layout-dashboard', label: 'Dashboard',         section: 'overview'    },
+  { to: '/labs',               icon: 'ti-building-hospital', label: 'LabList',           section: 'management'  },
   { to: '/pathologies',        icon: 'ti-virus',            label: 'Pathologies',       section: 'management'  },
   { to: '/collectors',         icon: 'ti-user-check',       label: 'Collectors',        section: 'management'  },
-  { to: '/test-orders',        icon: 'ti-clipboard-list',   label: 'Test Orders',       section: 'management'  },
   { to: '/collection-orders',  icon: 'ti-truck-delivery',   label: 'Collection Orders', section: 'management'  },
 ];
 
@@ -14,8 +14,8 @@ const PAGE_TITLES = {
   '/dashboard':         'Dashboard',
   '/pathologies':       'Pathologies',
   '/collectors':        'Collectors',
-  '/test-orders':       'Test Orders',
   '/collection-orders': 'Collection Orders',
+  '/labs':              'LabList',
 };
 
 export default function Layout({ user, onLogout }) {
