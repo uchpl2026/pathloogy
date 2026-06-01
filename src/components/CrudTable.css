@@ -49,7 +49,7 @@ td {
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--bg-secondary); }
 
-.action-btns { display: flex; gap: 6px; }
+.action-btns { display: flex; gap: 6px; align-items: center; }
 
 .pagination {
   display: flex; align-items: center; justify-content: space-between;

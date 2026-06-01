@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './CrudTable.css';
 
-export default function CrudTable({ columns, rows, onEdit, onDelete, onAdd, addLabel = 'Add Record' }) {
+export default function CrudTable({ columns, rows, onEdit, onDelete, onAdd, onView, addLabel = 'Add Record' }) {
   const [search, setSearch] = useState('');
 
   const filtered = rows.filter(row =>
@@ -54,6 +54,11 @@ export default function CrudTable({ columns, rows, onEdit, onDelete, onAdd, addL
                 ))}
                 <td>
                   <div className="action-btns">
+                    {onView && (
+                      <button className="icon-btn view" onClick={() => onView(row)} title="View" aria-label={`View record ${row.id}`}>
+                        <i className="ti ti-eye" />
+                      </button>
+                    )}
                     <button className="icon-btn" onClick={() => onEdit(row)} title="Edit" aria-label={`Edit record ${row.id}`}>
                       <i className="ti ti-edit" />
                     </button>

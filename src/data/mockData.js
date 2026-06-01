@@ -1,9 +1,9 @@
 export const pathologiesData = [
-  { id: 1, name: 'Complete Blood Count', code: 'CBC-001', category: 'Hematology',    turnaround: '4 hrs', price: '₹350', status: 'Active'   },
-  { id: 2, name: 'Lipid Profile',         code: 'LIP-002', category: 'Biochemistry',  turnaround: '6 hrs', price: '₹600', status: 'Active'   },
-  { id: 3, name: 'Thyroid Function Test', code: 'TFT-003', category: 'Endocrinology', turnaround: '8 hrs', price: '₹900', status: 'Active'   },
-  { id: 4, name: 'Liver Function Test',   code: 'LFT-004', category: 'Biochemistry',  turnaround: '6 hrs', price: '₹750', status: 'Inactive' },
-  { id: 5, name: 'HbA1c',                 code: 'DIA-005', category: 'Diabetes',      turnaround: '4 hrs', price: '₹450', status: 'Active'   },
+  { id: 1, name: 'Complete Blood Count', code: 'CBC-001' },
+  { id: 2, name: 'Lipid Profile',         code: 'LIP-002' },
+  { id: 3, name: 'Thyroid Function Test', code: 'TFT-003' },
+  { id: 4, name: 'Liver Function Test',   code: 'LFT-004' },
+  { id: 5, name: 'HbA1c',                 code: 'DIA-005' },
 ];
 
 export const collectorsData = [

@@ -91,6 +91,7 @@ body {
 }
 .icon-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
 .icon-btn.del:hover { background: #FCEBEB; color: #A32D2D; border-color: #F09595; }
+.icon-btn.view:hover { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
 .icon-btn i { font-size: 14px; }
 
 /* Badges */

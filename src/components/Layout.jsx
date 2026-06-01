@@ -4,8 +4,9 @@ import './Layout.css';
 
 const NAV = [
   { to: '/dashboard',          icon: 'ti-layout-dashboard', label: 'Dashboard',         section: 'overview'    },
-  { to: '/labs',               icon: 'ti-building-hospital', label: 'LabList',           section: 'management'  },
   { to: '/pathologies',        icon: 'ti-virus',            label: 'Pathologies',       section: 'management'  },
+  { to: '/labs',               icon: 'ti-building-hospital', label: 'LabList',           section: 'management'  },
+  
   { to: '/collectors',         icon: 'ti-user-check',       label: 'Collectors',        section: 'management'  },
   { to: '/collection-orders',  icon: 'ti-truck-delivery',   label: 'Collection Orders', section: 'management'  },
   { to: '/reports',            icon: 'ti-chart-bar',        label: 'Reports',           section: 'reports'     },
@@ -18,6 +19,7 @@ const PAGE_TITLES = {
   '/collection-orders': 'Collection Orders',
   '/labs':              'LabList',
   '/reports':           'Reports',
+  '/settings':          'Settings',
 };
 
 export default function Layout({ user, onLogout }) {
@@ -85,9 +87,10 @@ export default function Layout({ user, onLogout }) {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="nav-item">
+          <NavLink to="/settings" onClick={closeSidebar}
+            className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
             <i className="ti ti-settings" aria-hidden="true" /> Settings
-          </div>
+          </NavLink>
           {onLogout && (
             <button className="nav-item nav-item--btn logout-btn" onClick={onLogout}>
               <i className="ti ti-logout" aria-hidden="true" /> Sign out

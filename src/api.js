@@ -20,6 +20,8 @@ async function request(method, path, body) {
 // ── Auth ─────────────────────────────────────────────────────────────────────
 export const authAPI = {
   login: (email, password) => request('POST', '/auth/login', { email, password }),
+  changePassword: (userId, currentPassword, newPassword) =>
+    request('POST', '/auth/change-password', { userId, currentPassword, newPassword }),
 };
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -58,11 +60,12 @@ export const collectionOrdersAPI = {
 
 // ── Labs ──────────────────────────────────────────────────────────────────────
 export const labsAPI = {
-  list:   ()      => request('GET',    '/labs'),
-  get:    (id)    => request('GET',    `/labs/${id}`),
-  create: (data)  => request('POST',   '/labs', data),
-  update: (id, d) => request('PUT',    `/labs/${id}`, d),
-  remove: (id)    => request('DELETE', `/labs/${id}`),
+  list:     ()      => request('GET',    '/labs'),
+  get:      (id)    => request('GET',    `/labs/${id}`),
+  getTests: (id)    => request('GET',    `/labs/${id}/tests`),
+  create:   (data)  => request('POST',   '/labs', data),
+  update:   (id, d) => request('PUT',    `/labs/${id}`, d),
+  remove:   (id)    => request('DELETE', `/labs/${id}`),
 };
 
 // ── Reports ───────────────────────────────────────────────────────────────────

@@ -8,10 +8,12 @@ import Collectors from './pages/Collectors';
 import CollectorForm from './pages/CollectorForm';
 import CollectionOrders from './pages/CollectionOrders';
 import CollectionOrderForm from './pages/CollectionOrderForm';
+import CollectionOrderView from './pages/CollectionOrderView';
 import Labs from './pages/Labs';
 import LabForm from './pages/LabForm';
 import Reports from './pages/Reports';
 import Login from './pages/Login';
+import Settings from './pages/Settings';
 import { collectorsAPI, collectionOrdersAPI } from './api';
 
 // ── Persist session ───────────────────────────────────────────────────────────
@@ -83,6 +85,8 @@ export default function App() {
             element={<CollectionOrderForm rows={collectionOrders} setRows={setCollectionOrders} />} />
           <Route path="collection-orders/edit/:id"
             element={<CollectionOrderForm rows={collectionOrders} setRows={setCollectionOrders} />} />
+          <Route path="collection-orders/view/:id"
+            element={<CollectionOrderView />} />
 
           {/* Labs */}
           <Route path="labs"          element={<Labs />} />
@@ -91,6 +95,9 @@ export default function App() {
 
           {/* Reports */}
           <Route path="reports" element={<Reports />} />
+
+          {/* Settings */}
+          <Route path="settings" element={<Settings user={user} />} />
 
           {/* Redirect old URLs */}
           <Route path="test-orders/*" element={<Navigate to="/collection-orders" replace />} />

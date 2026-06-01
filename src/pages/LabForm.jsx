@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { labsAPI } from '../api';
+import { labsAPI, pathologiesAPI } from '../api';
 
 const BLANK = {
   name: '',
@@ -13,7 +13,7 @@ const BLANK = {
   contacts: [],
 };
 
-const BLANK_TEST    = { test_name: '', deposit_amount: '', patient_cost: '' };
+const BLANK_TEST    = { test_name: '', deposit_amount: '' };
 const BLANK_CONTACT = { contact_name: '', phone: '' };
 
 const sectionTitle = {
@@ -26,21 +26,26 @@ export default function LabForm() {
   const navigate = useNavigate();
   const editing  = Boolean(id);
 
-  const [form, setForm]   = useState(BLANK);
-  const [busy, setBusy]   = useState(false);
-  const [error, setError] = useState('');
+  const [form, setForm]         = useState(BLANK);
+  const [busy, setBusy]         = useState(false);
+  const [error, setError]       = useState('');
+  const [pathologies, setPathologies] = useState([]);
 
   useEffect(() => {
     if (editing) {
-      labsAPI.get(id)
-        .then(data => setForm({
-          ...BLANK,
-          ...data,
-          available_tests: Array.isArray(data.available_tests) ? data.available_tests : [],
-          contacts:        Array.isArray(data.contacts)        ? data.contacts        : [],
-        }))
+      Promise.all([pathologiesAPI.list(), labsAPI.get(id)])
+        .then(([paths, data]) => {
+          setPathologies(paths);
+          setForm({
+            ...BLANK,
+            ...data,
+            available_tests: Array.isArray(data.available_tests) ? data.available_tests : [],
+            contacts:        Array.isArray(data.contacts)        ? data.contacts        : [],
+          });
+        })
         .catch(() => navigate('/labs', { replace: true }));
     } else {
+      pathologiesAPI.list().then(setPathologies).catch(console.error);
       setForm(BLANK);
     }
   }, [editing, id]); // eslint-disable-line
@@ -193,24 +198,25 @@ export default function LabForm() {
           <>
             {/* header row */}
             <div style={{
-              display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 36px',
+              display: 'grid', gridTemplateColumns: '2fr 1fr 36px',
               gap: 10, padding: '6px 16px', marginBottom: 4,
             }}>
-              {['Test Name', 'Deposit (₹)', 'Patient Cost (₹)', ''].map((h, i) => (
+              {['Test Name', 'Deposit (₹)', ''].map((h, i) => (
                 <span key={i} style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</span>
               ))}
             </div>
 
             {form.available_tests.map((t, i) => (
-              <div key={i} style={{ ...rowBox, display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 36px', gap: 10, alignItems: 'center' }}>
-                <input className="form-input" value={t.test_name}
-                  onChange={e => updateTest(i, 'test_name', e.target.value)}
-                  placeholder="e.g. Complete Blood Count" />
+              <div key={i} style={{ ...rowBox, display: 'grid', gridTemplateColumns: '2fr 1fr 36px', gap: 10, alignItems: 'center' }}>
+                <select className="form-select" value={t.test_name}
+                  onChange={e => updateTest(i, 'test_name', e.target.value)}>
+                  <option value="">— Select Test —</option>
+                  {pathologies.map(p => (
+                    <option key={p.id} value={p.name}>{p.name} ({p.code})</option>
+                  ))}
+                </select>
                 <input className="form-input" value={t.deposit_amount}
                   onChange={e => updateTest(i, 'deposit_amount', e.target.value)}
-                  placeholder="0" />
-                <input className="form-input" value={t.patient_cost}
-                  onChange={e => updateTest(i, 'patient_cost', e.target.value)}
                   placeholder="0" />
                 {deleteBtn(() => removeTest(i))}
               </div>
@@ -256,7 +262,7 @@ export default function LabForm() {
           <button className="btn btn-primary" onClick={save} disabled={busy}>
             {busy
               ? <><i className="ti ti-loader-2 spin" /> Saving…</>
-              : editing ? 'Save Changes' : 'Add Lab'}
+              : editing ? 'Update Data' : 'Add Data'}
           </button>
         </div>
       </div>

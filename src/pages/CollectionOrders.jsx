@@ -118,6 +118,7 @@ export default function CollectionOrders({ rows, setRows }) {
 
   const openAdd  = ()  => navigate('/collection-orders/add');
   const openEdit = row => navigate(`/collection-orders/edit/${row.id}`);
+  const openView = row => navigate(`/collection-orders/view/${row.id}`);
 
   const del = async (id) => {
     try {
@@ -133,6 +134,7 @@ export default function CollectionOrders({ rows, setRows }) {
       columns={COLUMNS}
       rows={rows}
       onAdd={openAdd}
+      onView={openView}
       onEdit={openEdit}
       onDelete={del}
       addLabel="New Collection Order"
