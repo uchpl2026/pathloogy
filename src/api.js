@@ -47,6 +47,10 @@ export const collectorsAPI = {
   create:     (data)  => request('POST',   '/collectors', data),
   update:     (id, d) => request('PUT',    `/collectors/${id}`, d),
   remove:     (id)    => request('DELETE', `/collectors/${id}`),
+  // Test-rate assignments
+  getTestRates:    (id)        => request('GET',    `/collectors/${id}/test-rates`),
+  addTestRate:     (id, data)  => request('POST',   `/collectors/${id}/test-rates`, data),
+  deleteTestRate:  (id, rid)   => request('DELETE', `/collectors/${id}/test-rates/${rid}`),
 };
 
 // ── Collection Orders ─────────────────────────────────────────────────────────
