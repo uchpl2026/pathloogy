@@ -51,6 +51,8 @@ export const collectorsAPI = {
   getTestRates:    (id)        => request('GET',    `/collectors/${id}/test-rates`),
   addTestRate:     (id, data)  => request('POST',   `/collectors/${id}/test-rates`, data),
   deleteTestRate:  (id, rid)   => request('DELETE', `/collectors/${id}/test-rates/${rid}`),
+  // Patient rates for a specific collector + lab (used in CollectionOrderForm Step 2)
+  getPatientRates: (id, labId) => request('GET',    `/collectors/${id}/patient-rates?lab_id=${labId}`),
 };
 
 // ── Collection Orders ─────────────────────────────────────────────────────────
@@ -60,6 +62,18 @@ export const collectionOrdersAPI = {
   create: (data)  => request('POST',   '/collection-orders', data),
   update: (id, d) => request('PUT',    `/collection-orders/${id}`, d),
   remove: (id)    => request('DELETE', `/collection-orders/${id}`),
+};
+
+// ── Lab Payments ──────────────────────────────────────────────────────────────
+export const labPaymentsAPI = {
+  list:   (params = {}) => {
+    const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v !== undefined)).toString();
+    return request('GET', `/lab-payments${qs ? '?' + qs : ''}`);
+  },
+  get:    (id)    => request('GET',    `/lab-payments/${id}`),
+  create: (data)  => request('POST',   '/lab-payments', data),
+  update: (id, d) => request('PUT',    `/lab-payments/${id}`, d),
+  remove: (id)    => request('DELETE', `/lab-payments/${id}`),
 };
 
 // ── Labs ──────────────────────────────────────────────────────────────────────
@@ -82,4 +96,15 @@ export const reportsAPI = {
   },
   collectors: () => request('GET', '/reports/collectors'),
   labs:        () => request('GET', '/reports/labs'),
+};
+
+// ── Payment Report ─────────────────────────────────────────────────────────────
+export const paymentReportAPI = {
+  generate: (filters = {}) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''))
+    ).toString();
+    return request('GET', `/payment-report${qs ? '?' + qs : ''}`);
+  },
+  labs: () => request('GET', '/payment-report/labs'),
 };

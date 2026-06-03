@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { testOrdersAPI, pathologiesAPI } from '../api';
 
-const BLANK = { patient: '', test: '', doctor: '', priority: 'Routine', status: 'Pending' };
+const BLANK = { patient: '', patient_phone: '', test: '', doctor: '', priority: 'Routine', status: 'Pending' };
 
 export default function TestOrderForm() {
   const { id }   = useParams();
@@ -28,10 +28,9 @@ export default function TestOrderForm() {
     }
   }, [id]); // eslint-disable-line
 
-  // Default test to first pathology once loaded (add mode only)
   useEffect(() => {
     if (!editing && pathologies.length && !form.test) {
-      setForm(f => ({ ...f, test: pathologies[0].code }));
+      setForm(f => ({ ...f, test: pathologies[0].name }));
     }
   }, [pathologies]); // eslint-disable-line
 
@@ -77,25 +76,48 @@ export default function TestOrderForm() {
           </div>
         )}
 
+        {/* Row 1: Patient Name · Patient Phone · Test */}
         <div className="form-grid">
           <div className="form-row">
-            <label className="form-label">Patient Name</label>
-            <input className="form-input" value={form.patient} onChange={e => set('patient', e.target.value)} placeholder="Patient name" />
+            <label className="form-label">
+              Patient Name <span style={{ color: 'var(--danger, #A32D2D)' }}>*</span>
+            </label>
+            <input
+              className="form-input"
+              value={form.patient}
+              onChange={e => set('patient', e.target.value)}
+              placeholder="Patient name"
+            />
+          </div>
+          <div className="form-row">
+            <label className="form-label">Patient Phone</label>
+            <input
+              className="form-input"
+              value={form.patient_phone || ''}
+              onChange={e => set('patient_phone', e.target.value)}
+              placeholder="+91 XXXXXXXXXX"
+            />
           </div>
           <div className="form-row">
             <label className="form-label">Test</label>
             <select className="form-select" value={form.test} onChange={e => set('test', e.target.value)}>
               {pathologies.map(p => (
-                <option key={p.code} value={p.code}>{p.code} — {p.name}</option>
+                <option key={p.id} value={p.name}>{p.name}</option>
               ))}
             </select>
           </div>
         </div>
 
+        {/* Row 2: Referring Doctor · Priority · Status */}
         <div className="form-grid">
           <div className="form-row">
             <label className="form-label">Referring Doctor</label>
-            <input className="form-input" value={form.doctor} onChange={e => set('doctor', e.target.value)} placeholder="Dr. Name" />
+            <input
+              className="form-input"
+              value={form.doctor}
+              onChange={e => set('doctor', e.target.value)}
+              placeholder="Dr. Name"
+            />
           </div>
           <div className="form-row">
             <label className="form-label">Priority</label>
@@ -104,15 +126,14 @@ export default function TestOrderForm() {
               <option>Urgent</option>
             </select>
           </div>
-        </div>
-
-        <div className="form-row">
-          <label className="form-label">Status</label>
-          <select className="form-select" value={form.status} onChange={e => set('status', e.target.value)}>
-            {['Pending', 'Processing', 'Completed', 'Cancelled'].map(s => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
+          <div className="form-row">
+            <label className="form-label">Status</label>
+            <select className="form-select" value={form.status} onChange={e => set('status', e.target.value)}>
+              {['Pending', 'Processing', 'Completed', 'Cancelled'].map(s => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>

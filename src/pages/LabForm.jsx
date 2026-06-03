@@ -10,11 +10,9 @@ const BLANK = {
   contact_phone: '',
   status: 'Active',
   available_tests: [],
-  contacts: [],
 };
 
-const BLANK_TEST    = { test_name: '', deposit_amount: '' };
-const BLANK_CONTACT = { contact_name: '', phone: '' };
+const BLANK_TEST = { test_name: '', deposit_amount: '' };
 
 const sectionTitle = {
   fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)',
@@ -40,7 +38,6 @@ export default function LabForm() {
             ...BLANK,
             ...data,
             available_tests: Array.isArray(data.available_tests) ? data.available_tests : [],
-            contacts:        Array.isArray(data.contacts)        ? data.contacts        : [],
           });
         })
         .catch(() => navigate('/labs', { replace: true }));
@@ -52,36 +49,24 @@ export default function LabForm() {
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
-  // ── Available tests (per-test pricing) ────────────────────────────────
-  const addTest = () =>
-    setForm(f => ({ ...f, available_tests: [...f.available_tests, { ...BLANK_TEST }] }));
-
+  const addTest    = () => setForm(f => ({ ...f, available_tests: [...f.available_tests, { ...BLANK_TEST }] }));
   const updateTest = (i, key, val) =>
-    setForm(f => ({
-      ...f,
-      available_tests: f.available_tests.map((t, idx) => idx === i ? { ...t, [key]: val } : t),
-    }));
-
+    setForm(f => ({ ...f, available_tests: f.available_tests.map((t, idx) => idx === i ? { ...t, [key]: val } : t) }));
   const removeTest = (i) =>
     setForm(f => ({ ...f, available_tests: f.available_tests.filter((_, idx) => idx !== i) }));
 
-  // ── Lab contacts ──────────────────────────────────────────────────────
-  const addContact = () =>
-    setForm(f => ({ ...f, contacts: [...f.contacts, { ...BLANK_CONTACT }] }));
-
-  const updateContact = (i, key, val) =>
-    setForm(f => ({
-      ...f,
-      contacts: f.contacts.map((c, idx) => idx === i ? { ...c, [key]: val } : c),
-    }));
-
-  const removeContact = (i) =>
-    setForm(f => ({ ...f, contacts: f.contacts.filter((_, idx) => idx !== i) }));
-
-  // ── Save ──────────────────────────────────────────────────────────────
   const save = async () => {
     setError('');
     if (!form.name.trim()) { setError('Lab name is required.'); return; }
+    if (!form.my_lab_code.trim()) { setError('My Lab Code is required.'); return; }
+    // Validate deposit amounts are numeric
+    for (const t of form.available_tests || []) {
+      const v = (t && t.deposit_amount) || '';
+      if (v !== '' && isNaN(Number(v))) {
+        setError('Paid to Laboratory must be a number (use digits, optional decimal).');
+        return;
+      }
+    }
     setBusy(true);
     try {
       editing ? await labsAPI.update(id, form) : await labsAPI.create(form);
@@ -101,7 +86,7 @@ export default function LabForm() {
   const deleteBtn = (onClick) => (
     <button onClick={onClick} type="button" style={{
       background: 'none', border: '1px solid var(--border)', borderRadius: 6,
-      cursor: 'pointer', padding: '8px 10px', color: 'var(--danger)',
+      cursor: 'pointer', padding: '8px 10px', color: 'var(--danger, #A32D2D)',
       display: 'flex', alignItems: 'center', alignSelf: 'flex-end',
     }}>
       <i className="ti ti-trash" style={{ fontSize: 16 }} />
@@ -129,20 +114,21 @@ export default function LabForm() {
           </div>
         )}
 
-        {/* ── Basic Info ── */}
+        {/* ── Basic Info — 3 columns: Lab Name · Lab Code · Status ── */}
         <h3 style={{ ...sectionTitle, marginBottom: 16 }}>Basic Information</h3>
-
         <div className="form-grid">
           <div className="form-row">
             <label className="form-label">
-              Lab Name <span style={{ color: 'var(--danger)' }}>*</span>
+              Lab Name <span style={{ color: 'var(--danger, #A32D2D)' }}>*</span>
             </label>
             <input className="form-input" value={form.name}
               onChange={e => set('name', e.target.value)}
               placeholder="e.g. Metropolis Pathology Lab" />
           </div>
           <div className="form-row">
-            <label className="form-label">My Lab Code</label>
+            <label className="form-label">
+              My Lab Code <span style={{ color: 'var(--danger, #A32D2D)' }}>*</span>
+            </label>
             <input className="form-input" value={form.my_lab_code}
               onChange={e => set('my_lab_code', e.target.value)}
               placeholder="e.g. LAB-001" />
@@ -157,6 +143,7 @@ export default function LabForm() {
           </div>
         </div>
 
+        {/* Address — full width */}
         <div className="form-row" style={{ marginTop: 16 }}>
           <label className="form-label">Lab Address</label>
           <textarea className="form-input" rows={3} value={form.address}
@@ -164,9 +151,8 @@ export default function LabForm() {
             placeholder="Full address including city and PIN" />
         </div>
 
-        {/* ── Contact Info ── */}
+        {/* ── Contact Info — 3 columns: Email · Phone · (spare) ── */}
         <h3 style={{ ...sectionTitle, margin: '24px 0 16px' }}>Contact Information</h3>
-
         <div className="form-grid">
           <div className="form-row">
             <label className="form-label">Email</label>
@@ -180,9 +166,11 @@ export default function LabForm() {
               onChange={e => set('contact_phone', e.target.value)}
               placeholder="+91 XXXXXXXXXX" />
           </div>
+          {/* third cell intentionally empty for visual balance */}
+          <div />
         </div>
 
-        {/* ── Available Tests with per-test pricing ── */}
+        {/* ── Available Tests ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '24px 0 4px' }}>
           <h3 style={sectionTitle}>Available Tests</h3>
           <button className="btn" onClick={addTest} type="button" style={{ fontSize: 13 }}>
@@ -196,64 +184,31 @@ export default function LabForm() {
           </p>
         ) : (
           <>
-            {/* header row */}
             <div style={{
               display: 'grid', gridTemplateColumns: '2fr 1fr 36px',
               gap: 10, padding: '6px 16px', marginBottom: 4,
             }}>
-              {['Test Name', 'Deposit (₹)', ''].map((h, i) => (
+              {['Test Name', 'Paid to Laboratory (₹)', ''].map((h, i) => (
                 <span key={i} style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</span>
               ))}
             </div>
-
             {form.available_tests.map((t, i) => (
               <div key={i} style={{ ...rowBox, display: 'grid', gridTemplateColumns: '2fr 1fr 36px', gap: 10, alignItems: 'center' }}>
                 <select className="form-select" value={t.test_name}
                   onChange={e => updateTest(i, 'test_name', e.target.value)}>
                   <option value="">— Select Test —</option>
                   {pathologies.map(p => (
-                    <option key={p.id} value={p.name}>{p.name} ({p.code})</option>
+                    <option key={p.id} value={p.name}>{p.name}</option>
                   ))}
                 </select>
-                <input className="form-input" value={t.deposit_amount}
+                <input className="form-input" type="number" step="0.01" min="0"
+                  value={t.deposit_amount}
                   onChange={e => updateTest(i, 'deposit_amount', e.target.value)}
-                  placeholder="0" />
+                  placeholder="0.00" />
                 {deleteBtn(() => removeTest(i))}
               </div>
             ))}
           </>
-        )}
-
-        {/* ── Lab Contacts ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '24px 0 4px' }}>
-          <h3 style={sectionTitle}>Lab Contacts</h3>
-          <button className="btn" onClick={addContact} type="button" style={{ fontSize: 13 }}>
-            <i className="ti ti-plus" /> Add Contact
-          </button>
-        </div>
-
-        {form.contacts.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '12px 0 8px' }}>
-            No contacts added yet. Click "Add Contact" to add one.
-          </p>
-        ) : (
-          form.contacts.map((c, i) => (
-            <div key={i} style={{ ...rowBox, display: 'grid', gridTemplateColumns: '1fr 1fr 36px', gap: 12, alignItems: 'end' }}>
-              <div className="form-row" style={{ margin: 0 }}>
-                <label className="form-label">Contact Name</label>
-                <input className="form-input" value={c.contact_name}
-                  onChange={e => updateContact(i, 'contact_name', e.target.value)}
-                  placeholder="Full name" />
-              </div>
-              <div className="form-row" style={{ margin: 0 }}>
-                <label className="form-label">Phone</label>
-                <input className="form-input" value={c.phone}
-                  onChange={e => updateContact(i, 'phone', e.target.value)}
-                  placeholder="+91 XXXXXXXXXX" />
-              </div>
-              {deleteBtn(() => removeContact(i))}
-            </div>
-          ))
         )}
 
         {/* ── Actions ── */}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { pathologiesAPI } from '../api';
 
-const BLANK = { name: '', code: '' };
+const BLANK = { name: '', description: '' };
 
 export default function PathologyForm() {
   const { id }   = useParams();
@@ -27,8 +27,8 @@ export default function PathologyForm() {
 
   const save = async () => {
     setError('');
-    if (!form.name.trim() || !form.code.trim()) {
-      setError('Test name and code are required.');
+    if (!form.name.trim()) {
+      setError('Test name is required.');
       return;
     }
     setBusy(true);
@@ -65,10 +65,12 @@ export default function PathologyForm() {
           </div>
         )}
 
-        {/* Row 1: Test Name + Test Code */}
+        {/* 3-column grid */}
         <div className="form-grid">
           <div className="form-row">
-            <label className="form-label">Test Name</label>
+            <label className="form-label">
+              Test Name <span style={{ color: 'var(--danger, #A32D2D)' }}>*</span>
+            </label>
             <input
               className="form-input"
               value={form.name}
@@ -77,12 +79,12 @@ export default function PathologyForm() {
             />
           </div>
           <div className="form-row">
-            <label className="form-label">Test Code</label>
+            <label className="form-label">Description</label>
             <input
               className="form-input"
-              value={form.code}
-              onChange={e => set('code', e.target.value)}
-              placeholder="e.g. BGL-006"
+              value={form.description || ''}
+              onChange={e => set('description', e.target.value)}
+              placeholder="Short description (optional)"
             />
           </div>
         </div>

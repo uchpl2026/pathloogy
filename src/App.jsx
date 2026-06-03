@@ -12,6 +12,8 @@ import CollectionOrderView from './pages/CollectionOrderView';
 import Labs from './pages/Labs';
 import LabForm from './pages/LabForm';
 import Reports from './pages/Reports';
+import PaymentReport from './pages/PaymentReport';
+import LabPayments from './pages/LabPayments';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
 import { collectorsAPI, collectionOrdersAPI } from './api';
@@ -88,6 +90,8 @@ export default function App() {
           <Route path="collection-orders/view/:id"
             element={<CollectionOrderView />} />
 
+          <Route path="lab-payments" element={<LabPayments />} />
+
           {/* Labs */}
           <Route path="labs"          element={<Labs />} />
           <Route path="labs/add"      element={<LabForm />} />
@@ -95,6 +99,7 @@ export default function App() {
 
           {/* Reports */}
           <Route path="reports" element={<Reports />} />
+          <Route path="payment-report" element={<PaymentReport />} />
 
           {/* Settings */}
           <Route path="settings" element={<Settings user={user} />} />

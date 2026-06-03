@@ -8,8 +8,10 @@ const NAV = [
   { to: '/labs',               icon: 'ti-building-hospital', label: 'LabList',           section: 'management'  },
   
   { to: '/collectors',         icon: 'ti-user-check',       label: 'Collectors',        section: 'management'  },
+  { to: '/lab-payments',       icon: 'ti-credit-card',      label: 'Lab Payments',      section: 'management'  },
   { to: '/collection-orders',  icon: 'ti-truck-delivery',   label: 'Collection Orders', section: 'management'  },
   { to: '/reports',            icon: 'ti-chart-bar',        label: 'Reports',           section: 'reports'     },
+  { to: '/payment-report',     icon: 'ti-wallet',           label: 'Payment Report',     section: 'reports'     },
 ];
 
 const PAGE_TITLES = {
@@ -17,8 +19,10 @@ const PAGE_TITLES = {
   '/pathologies':       'Pathologies',
   '/collectors':        'Collectors',
   '/collection-orders': 'Collection Orders',
+  '/lab-payments':      'Lab Payments',
   '/labs':              'LabList',
   '/reports':           'Reports',
+  '/payment-report':    'Payment Report',
   '/settings':          'Settings',
 };
 

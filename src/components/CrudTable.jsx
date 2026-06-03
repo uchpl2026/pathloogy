@@ -11,6 +11,11 @@ export default function CrudTable({ columns, rows, onEdit, onDelete, onAdd, onVi
     })
   );
 
+  const confirmDelete = (id) => {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    onDelete(id);
+  };
+
   return (
     <div className="table-card">
       <div className="table-toolbar">
@@ -62,7 +67,7 @@ export default function CrudTable({ columns, rows, onEdit, onDelete, onAdd, onVi
                     <button className="icon-btn" onClick={() => onEdit(row)} title="Edit" aria-label={`Edit record ${row.id}`}>
                       <i className="ti ti-edit" />
                     </button>
-                    <button className="icon-btn del" onClick={() => onDelete(row.id)} title="Delete" aria-label={`Delete record ${row.id}`}>
+                    <button className="icon-btn del" onClick={() => confirmDelete(row.id)} title="Delete" aria-label={`Delete record ${row.id}`}>
                       <i className="ti ti-trash" />
                     </button>
                   </div>

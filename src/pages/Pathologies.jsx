@@ -9,8 +9,8 @@ const COLUMNS = [
     render: r => <span style={{ fontWeight: 500 }}>{r.name}</span>,
   },
   {
-    key: 'code', label: 'Code',
-    render: r => <code style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '2px 7px', borderRadius: 4 }}>{r.code}</code>,
+    key: 'description', label: 'Description',
+    render: r => <span style={{ color: 'var(--text-secondary)' }}>{r.description || '—'}</span>,
   },
 ];
 

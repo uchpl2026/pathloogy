@@ -111,7 +111,6 @@ const COLUMNS = [
 
 export default function CollectionOrders({ rows, setRows }) {
   const navigate = useNavigate();
-
   useEffect(() => {
     collectionOrdersAPI.list().then(setRows).catch(console.error);
   }, []); // eslint-disable-line

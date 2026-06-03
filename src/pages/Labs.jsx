@@ -10,13 +10,15 @@ const COLUMNS = [
     render: r => (
       <div>
         <div style={{ fontWeight: 600 }}>{r.name}</div>
-        {r.my_lab_code && (
-          <code style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 4, color: 'var(--text-secondary)', marginTop: 3, display: 'inline-block' }}>
-            {r.my_lab_code}
-          </code>
-        )}
+        {/* My Lab Code moved to separate column */}
       </div>
     ),
+  },
+  {
+    key: 'my_lab_code', label: 'My Lab Code',
+    render: r => r.my_lab_code
+      ? <code style={{ fontSize: 11, background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: 4, color: 'var(--text-secondary)' }}>{r.my_lab_code}</code>
+      : <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>—</span>,
   },
   {
     key: 'available_tests', label: 'Available Tests',
@@ -52,35 +54,6 @@ const COLUMNS = [
           {mn === mx ? `₹${mn}` : `₹${mn} – ₹${mx}`}
         </span>
       );
-    },
-  },
-  {
-    key: 'cost_range', label: 'Patient Cost Range',
-    render: r => {
-      const tests = Array.isArray(r.available_tests) ? r.available_tests : [];
-      const costs = tests.map(t => parseFloat(t.patient_cost)).filter(n => !isNaN(n));
-      if (!costs.length)
-        return <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>—</span>;
-      const mn = Math.min(...costs), mx = Math.max(...costs);
-      return (
-        <span style={{ fontWeight: 500, fontSize: 13 }}>
-          {mn === mx ? `₹${mn}` : `₹${mn} – ₹${mx}`}
-        </span>
-      );
-    },
-  },
-  {
-    key: 'contact_phone', label: 'Phone',
-    render: r => r.contact_phone ||
-      <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>—</span>,
-  },
-  {
-    key: 'contacts', label: 'Contacts',
-    render: r => {
-      const c = Array.isArray(r.contacts) ? r.contacts : [];
-      return c.length
-        ? <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{c.length} contact{c.length !== 1 ? 's' : ''}</span>
-        : <span style={{ color: 'var(--text-secondary)', fontSize: 12 }}>—</span>;
     },
   },
   {

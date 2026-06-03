@@ -3,9 +3,7 @@ import ReactDOM from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { collectorsAPI, labsAPI } from '../api';
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Portal dropdown — renders below an anchor, escapes overflow:hidden
-───────────────────────────────────────────────────────────────────────────── */
+/* ── Portal dropdown ── */
 function DropdownPortal({ anchorRef, children }) {
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
   useLayoutEffect(() => {
@@ -30,9 +28,7 @@ function DropdownPortal({ anchorRef, children }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   SingleSelectDropdown — searchable, portal-based
-───────────────────────────────────────────────────────────────────────────── */
+/* ── Searchable single-select dropdown ── */
 function SingleSelectDropdown({
   options = [], value = '', onChange,
   placeholder = 'Select…', labelKey = 'name', valueKey = 'id',
@@ -150,9 +146,7 @@ function SingleSelectDropdown({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Section wrapper
-───────────────────────────────────────────────────────────────────────────── */
+/* ── Section wrapper ── */
 function Section({ icon, title, children }) {
   return (
     <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
@@ -166,9 +160,7 @@ function Section({ icon, title, children }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   CollectorTestRateSection — shown only when editing an existing collector
-───────────────────────────────────────────────────────────────────────────── */
+/* ── Test Rate Section (edit mode only) ── */
 function CollectorTestRateSection({ collectorId }) {
   const [allLabs, setAllLabs]           = useState([]);
   const [selLab, setSelLab]             = useState('');
@@ -183,7 +175,6 @@ function CollectorTestRateSection({ collectorId }) {
 
   const flash = (type, text) => { setMsg({ type, text }); setTimeout(() => setMsg({ type: '', text: '' }), 3500); };
 
-  /* Load labs + existing rates on mount */
   useEffect(() => {
     labsAPI.list().then(setAllLabs).catch(() => {});
     setLoadingRates(true);
@@ -193,7 +184,6 @@ function CollectorTestRateSection({ collectorId }) {
       .finally(() => setLoadingRates(false));
   }, [collectorId]);
 
-  /* Load tests when lab changes */
   useEffect(() => {
     setLabTests([]); setSelTest(''); setPatientRate('');
     if (!selLab) return;
@@ -204,7 +194,6 @@ function CollectorTestRateSection({ collectorId }) {
       .finally(() => setLoadingTests(false));
   }, [selLab]);
 
-  /* Pre-fill patient_rate from lab test default when test is chosen */
   useEffect(() => {
     if (!selTest) { setPatientRate(''); return; }
     const t = labTests.find(t => String(t.id) === String(selTest));
@@ -235,6 +224,7 @@ function CollectorTestRateSection({ collectorId }) {
   };
 
   const handleDelete = async (rateId) => {
+    if (!window.confirm('Are you sure you want to remove this assigned test rate?')) return;
     try {
       await collectorsAPI.deleteTestRate(collectorId, rateId);
       setSavedRates(prev => prev.filter(r => r.id !== rateId));
@@ -262,8 +252,8 @@ function CollectorTestRateSection({ collectorId }) {
         </div>
       )}
 
-      {/* Lab + Test + Rate */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 180px', gap: 12, alignItems: 'end', marginBottom: 16 }}>
+      {/* 3-column: Lab · Test · Patient Rate */}
+      <div className="form-grid" style={{ marginBottom: 16 }}>
         <div>
           <label className="form-label" style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
             <i className="ti ti-building-hospital" style={{ fontSize: 13, color: 'var(--accent)' }} /> Lab
@@ -372,10 +362,8 @@ function CollectorTestRateSection({ collectorId }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Main form
-───────────────────────────────────────────────────────────────────────────── */
-const BLANK_INFO = { name: '', phone: '', email: '', status: 'Active' };
+/* ── Main form ── */
+const BLANK_INFO = { name: '', phone: '', email: '', address: '', status: 'Active' };
 
 export default function CollectorForm({ rows, setRows }) {
   const { id }   = useParams();
@@ -391,7 +379,13 @@ export default function CollectorForm({ rows, setRows }) {
   useEffect(() => {
     if (!editing) { setInfo(BLANK_INFO); return; }
     const apply = data => {
-      setInfo({ name: data.name || '', phone: data.phone || '', email: data.email || '', status: data.status || 'Active' });
+      setInfo({
+        name:    data.name    || '',
+        phone:   data.phone   || '',
+        email:   data.email   || '',
+        address: data.address || '',
+        status:  data.status  || 'Active',
+      });
     };
     const existing = rows.find(r => String(r.id) === String(id));
     if (existing) apply(existing);
@@ -435,11 +429,12 @@ export default function CollectorForm({ rows, setRows }) {
           </div>
         )}
 
-        {/* ══ Collector Info ══════════════════════════════════════════════ */}
+        {/* ══ Collector Info — 3-column grid ══ */}
         <Section icon="ti-user" title="Collector Information">
+          {/* Row 1: Name · Phone · Email */}
           <div className="form-grid">
             <div className="form-row">
-              <label className="form-label">Full Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <label className="form-label">Full Name <span style={{ color: 'var(--danger, #A32D2D)' }}>*</span></label>
               <input className="form-input" value={info.name}
                 onChange={e => setInfoField('name', e.target.value)} placeholder="Full name" />
             </div>
@@ -448,12 +443,18 @@ export default function CollectorForm({ rows, setRows }) {
               <input className="form-input" value={info.phone}
                 onChange={e => setInfoField('phone', e.target.value)} placeholder="+91 XXXXXXXXXX" />
             </div>
-          </div>
-          <div className="form-grid" style={{ marginTop: 14 }}>
             <div className="form-row">
               <label className="form-label">Email</label>
               <input className="form-input" type="email" value={info.email}
                 onChange={e => setInfoField('email', e.target.value)} placeholder="collector@example.com" />
+            </div>
+          </div>
+          {/* Row 2: Address · Status · (empty) */}
+          <div className="form-grid">
+            <div className="form-row" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Address</label>
+              <input className="form-input" value={info.address}
+                onChange={e => setInfoField('address', e.target.value)} placeholder="Collector address" />
             </div>
             <div className="form-row">
               <label className="form-label">Status</label>
@@ -465,10 +466,10 @@ export default function CollectorForm({ rows, setRows }) {
           </div>
         </Section>
 
-        {/* ══ Test Rate Assignment — Edit only ═══════════════════════════ */}
+        {/* ══ Test Rate Assignment — Edit only ══ */}
         {editing && <CollectorTestRateSection collectorId={id} />}
 
-        {/* ══ Actions ════════════════════════════════════════════════════ */}
+        {/* ══ Actions ══ */}
         <div style={{ display: 'flex', gap: 12, marginTop: 28 }}>
           <button className="btn" onClick={() => navigate('/collectors')}>Cancel</button>
           <button className="btn btn-primary" onClick={save} disabled={busy}>
