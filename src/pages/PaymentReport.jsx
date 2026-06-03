@@ -59,6 +59,77 @@ function LabPaymentRow({ payment, idx }) {
   );
 }
 
+
+// ── LabDueSummary ─────────────────────────────────────────────────────────────
+function LabDueSummary({ labDueSummary }) {
+  if (!labDueSummary || labDueSummary.length === 0) return null;
+
+  const totalDue = labDueSummary.reduce((s, r) => s + r.total_due, 0);
+
+  return (
+    <div className="pr-group-card pr-lab-due-card">
+      <div className="pr-group-header pr-lab-due-header">
+        <div className="pr-group-title">
+          <i className="ti ti-wallet" />
+          <span>Total Due per Lab</span>
+          <span className="pr-group-count">{labDueSummary.length} labs</span>
+        </div>
+        <div className="pr-group-pills">
+          <span className={`pr-gpill ${totalDue > 0 ? 'pr-gpill--net-neg' : 'pr-gpill--net-pos'}`}>
+            <i className={`ti ${totalDue > 0 ? 'ti-alert-circle' : 'ti-circle-check'}`} />
+            Overall Due: {fmtMoney(totalDue)}
+          </span>
+        </div>
+      </div>
+      <div className="pr-group-body">
+        <div className="pr-table-wrap">
+          <table className="pr-table">
+            <thead>
+              <tr>
+                <th className="pr-th-num">#</th>
+                <th>Lab</th>
+                <th className="pr-th-right">Total Assigned (paid_to_lab)</th>
+                <th className="pr-th-right">Total Disbursed</th>
+                <th className="pr-th-right">Total Due</th>
+              </tr>
+            </thead>
+            <tbody>
+              {labDueSummary.map((row, idx) => {
+                const duePos = row.total_due <= 0;
+                return (
+                  <tr key={row.lab_name} className="pr-tr">
+                    <td className="pr-td-num">{idx + 1}</td>
+                    <td><span className="pr-lab-chip">{row.lab_name}</span></td>
+                    <td className="pr-td-money">{fmtMoney(row.total_ptl)}</td>
+                    <td className="pr-td-money pr-td-paid">{fmtMoney(row.total_lp)}</td>
+                    <td className="pr-td-money">
+                      <span className={`pr-due-badge ${duePos ? 'pr-due-badge--clear' : 'pr-due-badge--due'}`}>
+                        {fmtMoney(row.total_due)}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="pr-tfoot-row">
+                <td colSpan={2} className="pr-tfoot-label">Grand Total</td>
+                <td className="pr-td-money pr-tfoot-val">{fmtMoney(labDueSummary.reduce((s,r)=>s+r.total_ptl,0))}</td>
+                <td className="pr-td-money pr-td-paid pr-tfoot-val">{fmtMoney(labDueSummary.reduce((s,r)=>s+r.total_lp,0))}</td>
+                <td className="pr-td-money pr-tfoot-val">
+                  <span className={`pr-due-badge ${totalDue <= 0 ? 'pr-due-badge--clear' : 'pr-due-badge--due'}`}>
+                    {fmtMoney(totalDue)}
+                  </span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── GroupCard ─────────────────────────────────────────────────────────────────
 function GroupCard({ groupData }) {
   const [tab, setTab] = useState('orders');
@@ -413,13 +484,21 @@ export default function PaymentReport() {
           </div>
         ) : !reportData ? null
           : groups.length === 0 ? (
-            <div className="pr-empty">
-              <div className="pr-empty-icon"><i className="ti ti-mood-empty" /></div>
-              <p>No payment records found for the selected filters.</p>
-              <span>Try adjusting the date range or clearing the lab filter.</span>
-            </div>
+            <>
+              {reportData?.lab_due_summary?.length > 0 && (
+                <LabDueSummary labDueSummary={reportData.lab_due_summary} />
+              )}
+              <div className="pr-empty">
+                <div className="pr-empty-icon"><i className="ti ti-mood-empty" /></div>
+                <p>No payment records found for the selected filters.</p>
+                <span>Try adjusting the date range or clearing the lab filter.</span>
+              </div>
+            </>
           ) : (
             <div className="pr-groups">
+              {reportData?.lab_due_summary?.length > 0 && (
+                <LabDueSummary labDueSummary={reportData.lab_due_summary} />
+              )}
               {groups.map(g => (
                 <GroupCard key={g.group} groupData={g} />
               ))}
