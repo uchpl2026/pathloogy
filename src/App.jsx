@@ -16,6 +16,9 @@ import PaymentReport from './pages/PaymentReport';
 import LabPayments from './pages/LabPayments';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
+import SuperAdminLayout from './superadmin/SuperAdminLayout';
+import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
+import AdminAccounts from './superadmin/AdminAccounts';
 import { collectorsAPI, collectionOrdersAPI } from './api';
 
 // ── Persist session ───────────────────────────────────────────────────────────
@@ -38,7 +41,7 @@ export default function App() {
   useEffect(() => { saveSession(user); }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.role === 'superadmin') return;
     setLoading(true);
     Promise.all([collectorsAPI.list(), collectionOrdersAPI.list()])
       .then(([cols, orders]) => {
@@ -54,6 +57,24 @@ export default function App() {
 
   if (!user) return <Login onLogin={handleLogin} />;
 
+  // ── Superadmin app ──────────────────────────────────────────────────────────
+  if (user.role === 'superadmin') {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/sa" element={<SuperAdminLayout user={user} onLogout={handleLogout} />}>
+            <Route index element={<Navigate to="/sa/dashboard" replace />} />
+            <Route path="dashboard" element={<SuperAdminDashboard user={user} />} />
+            <Route path="admins"    element={<AdminAccounts />} />
+          </Route>
+          {/* Redirect any other URL to superadmin dashboard */}
+          <Route path="*" element={<Navigate to="/sa/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    );
+  }
+
+  // ── Admin app ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
@@ -80,7 +101,7 @@ export default function App() {
           <Route path="collectors/add"      element={<CollectorForm rows={collectors} setRows={setCollectors} />} />
           <Route path="collectors/edit/:id" element={<CollectorForm rows={collectors} setRows={setCollectors} />} />
 
-          {/* Collection Orders – CollectionOrderForm fetches labs & active collectors itself */}
+          {/* Collection Orders */}
           <Route path="collection-orders"
             element={<CollectionOrders rows={collectionOrders} setRows={setCollectionOrders} />} />
           <Route path="collection-orders/add"
@@ -98,8 +119,8 @@ export default function App() {
           <Route path="labs/edit/:id" element={<LabForm />} />
 
           {/* Reports */}
-          <Route path="reports" element={<Reports />} />
-          <Route path="payment-report" element={<PaymentReport />} />
+          <Route path="reports"         element={<Reports />} />
+          <Route path="payment-report"  element={<PaymentReport />} />
 
           {/* Settings */}
           <Route path="settings" element={<Settings user={user} />} />

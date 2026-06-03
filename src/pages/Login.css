@@ -154,3 +154,10 @@
   .login-right { padding: 16px; }
   .login-card { padding: 24px 20px 20px; }
 }
+
+.login-hint--sa {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  margin-top: 6px;
+}
+.login-hint--sa i { color: #8E44AD; }

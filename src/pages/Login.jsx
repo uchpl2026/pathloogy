@@ -111,6 +111,9 @@ export default function Login({ onLogin }) {
           <p className="login-hint">
             <i className="ti ti-info-circle" /> Demo: <strong>admin@pathlab.com</strong> / <strong>password</strong>
           </p>
+          <p className="login-hint login-hint--sa">
+            <i className="ti ti-shield-check" /> Superadmin access is available for authorized personnel only.
+          </p>
         </div>
       </div>
     </div>

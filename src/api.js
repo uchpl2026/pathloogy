@@ -1,20 +1,51 @@
 /**
  * api.js  –  PathLab Pro API service
  * Base URL is controlled via .env → REACT_APP_API_BASE_URL
+ * Every request automatically includes X-Admin-Id so each admin
+ * only sees and modifies their own data.
  */
 
 const BASE = process.env.REACT_APP_API_BASE_URL;
 
+function getStoredUser() {
+  try {
+    const s = localStorage.getItem('pathlab_user');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function getStoredRole() {
+  return getStoredUser()?.role || '';
+}
+
+function getAdminId() {
+  return getStoredUser()?.id || '';
+}
+
+function buildHeaders(extra = {}) {
+  return {
+    'Content-Type': 'application/json',
+    'X-User-Role': getStoredRole(),
+    'X-Admin-Id': String(getAdminId()),
+    ...extra,
+  };
+}
+
 async function request(method, path, body) {
   const opts = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: buildHeaders(),
   };
   if (body !== undefined) opts.body = JSON.stringify(body);
   const res = await fetch(`${BASE}${path}`, opts);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
+}
+
+async function requestWithRole(method, path, body) {
+  // kept for superadmin endpoints that check X-User-Role
+  return request(method, path, body);
 }
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -107,4 +138,12 @@ export const paymentReportAPI = {
     return request('GET', `/payment-report${qs ? '?' + qs : ''}`);
   },
   labs: () => request('GET', '/payment-report/labs'),
+};
+
+// ── Admins (superadmin only) ──────────────────────────────────────────────────
+export const adminsAPI = {
+  list:   ()           => requestWithRole('GET',    '/admins'),
+  create: (data)       => requestWithRole('POST',   '/admins', data),
+  toggle: (id, active) => requestWithRole('PUT',    `/admins/${id}/toggle`, { is_active: active }),
+  delete: (id)         => requestWithRole('DELETE', `/admins/${id}`),
 };
